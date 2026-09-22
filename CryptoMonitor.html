@@ -10,13 +10,11 @@
 <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700;900&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
 
 <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.0/dist/umd/supabase.min.js"></script>
 
 <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
 
-    /* ============================================================
-       LIGHT THEME (default)
-       ============================================================ */
     :root {
         --green:      #2ecc71;
         --green-dark: #27ae60;
@@ -64,38 +62,28 @@
         --chart-modal-header-2: #52d807;
     }
 
-    /* ============================================================
-       DARK THEME
-       ============================================================ */
     body.dark {
         --bg:        #1a1f2e;
         --bg-alt:    #252b3d;
         --panel:     #252b3d;
         --panel-alt: #2d3448;
-
         --border:    #3a4056;
         --border-2:  #454c66;
         --border-3:  #353b52;
-
         --text:      #e8ecf4;
         --text-2:    #b8bfd0;
         --text-3:    #8b93a8;
         --text-4:    #5a6278;
-
         --terminal-bg: #0f1419;
-
         --header-bg-1: #0e5a3a;
         --header-bg-2: #1a9b5a;
         --panel-header-bg: #1a5c33;
         --panel-header-icon-bg: #0a3d1f;
-
         --table-header-bg: #1a1f2e;
         --table-row-even: #2a3046;
         --table-row-hover: #303752;
-
         --chart-modal-header-1: #0e5a3a;
         --chart-modal-header-2: #1a9b5a;
-
         --light-green-bg: #1a3d2e;
     }
 
@@ -109,167 +97,120 @@
         transition: background 0.3s ease, color 0.3s ease;
     }
 
-    /* Dark theme specific overrides */
-    body.dark .usage-widget .usage-label,
-    body.dark .usage-widget .usage-plan-tag,
-    body.dark .usage-widget .usage-bottom,
-    body.dark .usage-widget .usage-bottom .pct {
+    /* ============================================================
+       LOCK SCREEN
+       ============================================================ */
+    .lock-screen {
+        position: fixed;
+        inset: 0;
+        background: linear-gradient(135deg, #0e5a3a, #1a9b5a);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 99999;
+        padding: 20px;
+    }
+    .lock-screen.hidden { display: none; }
+    .lock-box {
+        background: #ffffff;
+        border-radius: 12px;
+        padding: 40px 32px;
+        max-width: 380px;
+        width: 100%;
+        text-align: center;
+        box-shadow: 0 24px 60px rgba(0, 0, 0, 0.35);
+        animation: lockIn 0.4s ease;
+    }
+    @keyframes lockIn {
+        from { opacity: 0; transform: scale(0.94); }
+        to   { opacity: 1; transform: scale(1); }
+    }
+    .lock-icon {
+        font-size: 48px;
+        margin-bottom: 12px;
+        line-height: 1;
+    }
+    .lock-title {
+        font-size: 20px;
+        font-weight: 900;
+        color: #2c3e50;
+        margin-bottom: 8px;
+        letter-spacing: -0.3px;
+    }
+    .lock-subtitle {
+        font-size: 13px;
+        color: #7f8c8d;
+        margin-bottom: 24px;
+    }
+    .lock-input {
+        width: 100%;
+        background: #f8f9fa;
+        border: 2px solid #e0e0e0;
+        color: #2c3e50;
+        padding: 14px 16px;
+        border-radius: 8px;
+        font-family: "JetBrains Mono", monospace;
+        font-size: 24px;
+        letter-spacing: 14px;
+        text-align: center;
+        outline: none;
+        transition: all 0.2s;
+        margin-bottom: 16px;
+    }
+    .lock-input:focus {
+        border-color: #2ecc71;
+        box-shadow: 0 0 0 4px rgba(46, 204, 113, 0.2);
+    }
+    .lock-input.error {
+        border-color: #e74c3c;
+        box-shadow: 0 0 0 4px rgba(231, 76, 60, 0.2);
+        animation: shake 0.4s;
+    }
+    @keyframes shake {
+        0%, 100% { transform: translateX(0); }
+        20% { transform: translateX(-8px); }
+        40% { transform: translateX(8px); }
+        60% { transform: translateX(-5px); }
+        80% { transform: translateX(5px); }
+    }
+    .lock-btn {
+        width: 100%;
+        background: #2ecc71;
         color: #ffffff;
+        border: none;
+        padding: 14px;
+        border-radius: 8px;
+        font-family: inherit;
+        font-weight: 900;
+        font-size: 14px;
+        letter-spacing: 1px;
+        text-transform: uppercase;
+        cursor: pointer;
+        transition: all 0.15s;
     }
-    body.dark .usage-widget .usage-counts .used,
-    body.dark .usage-widget .usage-counts .slash,
-    body.dark .usage-widget .usage-counts .left,
-    body.dark .usage-widget .usage-counts .suffix {
-        color: #ffffff;
+    .lock-btn:hover { background: #27ae60; }
+    .lock-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+    .lock-error {
+        color: #e74c3c;
+        font-size: 12px;
+        font-weight: 600;
+        margin-top: 12px;
+        min-height: 16px;
     }
-    body.dark .usage-widget .usage-counts .left.low {
-        color: #ffb3b3;
-    }
-    body.dark .panel-header h2 {
-        color: #ffffff;
-    }
-    body.dark label {
-        color: var(--text-2);
-    }
-    body.dark table tbody tr:nth-child(even) {
-        background: var(--table-row-even);
-    }
-    body.dark table tbody tr:nth-child(even):hover {
-        background: var(--table-row-hover);
-    }
-    body.dark .alert.pump {
-        background: rgba(46, 204, 113, 0.15);
-    }
-    body.dark .alert.dump {
-        background: rgba(231, 76, 60, 0.15);
-    }
-    body.dark .alert .badge {
-        background: var(--panel-alt);
-        border-color: var(--border-2);
-        color: var(--text);
-    }
-    body.dark .alert strong {
-        color: var(--text);
-    }
-    body.dark .chart-stat {
-        background: var(--panel-alt);
-    }
-    body.dark .chart-stat .label {
-        color: var(--text-3);
-    }
-    body.dark .chart-stat .value {
-        color: var(--text);
-    }
-    body.dark .chart-stat.pump .value { color: var(--green); }
-    body.dark .chart-stat.dump .value { color: var(--red); }
-    body.dark .chart-modal,
-    body.dark .compare-modal {
-        background: var(--panel);
-    }
-    body.dark .chart-modal-footer,
-    body.dark .compare-pane-header,
-    body.dark .compare-pane-footer {
-        background: var(--panel);
-        border-color: var(--border-3);
-    }
-    body.dark .chart-modal-body,
-    body.dark .compare-pane-body,
-    body.dark .compare-modal-body,
-    body.dark .compare-divider {
-        background: var(--panel-alt);
-    }
-    body.dark .chart-loading {
-        background: var(--panel-alt);
-        color: var(--text-3);
-    }
-    body.dark .chart-loading .spinner {
-        border-color: var(--border-3);
-        border-top-color: var(--green);
-    }
-    body.dark input,
-    body.dark textarea,
-    body.dark select {
-        background: var(--panel-alt) !important;
-        color: var(--text) !important;
-        border-color: var(--border-2) !important;
-    }
-    body.dark input::placeholder,
-    body.dark textarea::placeholder {
-        color: var(--text-4);
-    }
-    body.dark select option {
-        background: var(--panel);
-        color: var(--text);
-    }
-    body.dark .empty {
-        background: var(--panel-alt);
-        border-color: var(--border-2);
-    }
-    body.dark .chip-list {
-        background: var(--panel-alt);
-        border-color: var(--border-2);
-    }
-    body.dark .chip {
-        background: var(--blue);
-    }
-    body.dark .presets button {
-        background: var(--panel-alt);
-        color: var(--text-2);
-        border-color: var(--border-2);
-    }
-    body.dark .presets button:hover {
-        background: var(--blue);
-        color: #ffffff;
-        border-color: var(--blue);
-    }
-    body.dark button.ghost {
-        background: var(--panel-alt);
-        color: var(--text-2);
-        border-color: var(--border-2);
-    }
-    body.dark button.ghost:not(:disabled):hover {
-        background: var(--border-2);
-    }
-    body.dark .io-card {
-        background: var(--panel-alt);
-        border-color: var(--border-3);
-    }
-    body.dark .io-card p {
-        color: var(--text-3);
-    }
-    body.dark #statusBox p {
-        background: var(--panel-alt);
-    }
-    body.dark .progress-bar {
-        background: var(--bg-alt);
-    }
-    body.dark .stat-card {
-        color: #ffffff;
-    }
-    body.dark .validation-summary {
-        background: rgba(231, 76, 60, 0.12);
-        border-color: rgba(231, 76, 60, 0.4);
-    }
-    body.dark .validation-summary h4 { color: #ff8b8b; }
-    body.dark .validation-summary li strong { color: #ff8b8b; }
-    body.dark .validation-summary li span { color: var(--text-3); }
-    body.dark .validation-summary li { border-bottom-color: rgba(231, 76, 60, 0.25); }
-    body.dark .rules-empty {
-        background: var(--panel-alt);
-        border-color: var(--border-2);
-        color: var(--text-3);
-    }
-    body.dark .rule-item {
-        background: var(--panel-alt);
-        border-color: var(--border-2);
-    }
-    body.dark .rule-item .rule-symbols {
-        color: var(--text);
+    .lock-hint {
+        margin-top: 20px;
+        font-size: 11px;
+        color: #bdc3c7;
+        font-style: italic;
     }
 
     /* ============================================================
-       HEADER
+       MAIN APP (hidden until unlocked)
        ============================================================ */
+    #appRoot { display: none; }
+    #appRoot.unlocked { display: block; }
+
+    /* Header */
     header {
         background: linear-gradient(135deg, var(--header-bg-1), var(--header-bg-2));
         color: #ffffff;
@@ -296,15 +237,13 @@
         margin-top: 4px;
         font-weight: 400;
     }
-
     .header-right {
         display: flex;
         align-items: center;
         gap: 12px;
         flex-wrap: wrap;
     }
-
-    .theme-toggle {
+    .theme-toggle, .lock-toggle {
         width: 42px;
         height: 42px;
         border-radius: 50%;
@@ -319,20 +258,11 @@
         transition: all 0.25s ease;
         padding: 0;
         backdrop-filter: blur(8px);
-        -webkit-backdrop-filter: blur(8px);
     }
-    .theme-toggle:hover {
-        background: rgba(255, 255, 255, 0.32);
-        transform: rotate(20deg) scale(1.08);
-        filter: none;
-    }
-    .theme-toggle:active {
-        transform: rotate(-20deg) scale(0.95);
-    }
+    .theme-toggle:hover { background: rgba(255, 255, 255, 0.32); transform: rotate(20deg) scale(1.08); }
+    .lock-toggle:hover  { background: rgba(255, 255, 255, 0.32); transform: scale(1.08); }
 
-    /* ============================================================
-       API USAGE WIDGET (in header) — DO NOT MODIFY
-       ============================================================ */
+    /* API Usage Widget */
     .usage-widget {
         display: flex;
         align-items: center;
@@ -340,101 +270,60 @@
         background: rgba(255, 255, 255, 0.15);
         border: 1px solid rgba(255, 255, 255, 0.25);
         backdrop-filter: blur(8px);
-        -webkit-backdrop-filter: blur(8px);
         padding: 8px 14px;
         border-radius: 6px;
         min-width: 320px;
         box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.15);
     }
-    .usage-widget .usage-icon {
-        font-size: 20px;
-        line-height: 1;
-        filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.2));
-    }
+    .usage-widget .usage-icon { font-size: 20px; line-height: 1; }
     .usage-widget .usage-body { flex: 1; min-width: 0; }
     .usage-widget .usage-top {
-        display: flex;
-        align-items: baseline;
-        justify-content: space-between;
-        gap: 10px;
-        margin-bottom: 5px;
+        display: flex; align-items: baseline; justify-content: space-between;
+        gap: 10px; margin-bottom: 5px;
     }
     .usage-widget .usage-label {
-        font-size: 9.5px;
-        font-weight: 700;
-        color: rgba(7, 108, 4, 0.85);
-        text-transform: uppercase;
-        letter-spacing: 0.6px;
-        white-space: nowrap;
+        font-size: 9.5px; font-weight: 700;
+        color: rgba(255,255,255,0.95); text-transform: uppercase;
+        letter-spacing: 0.6px; white-space: nowrap;
     }
     .usage-widget .usage-plan-tag {
-        font-size: 9px;
-        font-weight: 700;
-        background: rgba(255, 255, 255, 0.2);
-        color: rgba(7, 108, 4, 0.85);
-        padding: 2px 6px;
-        border-radius: 3px;
-        letter-spacing: 0.4px;
-        white-space: nowrap;
+        font-size: 9px; font-weight: 700;
+        background: rgba(255,255,255,0.2); color: rgba(255,255,255,0.95);
+        padding: 2px 6px; border-radius: 3px;
+        letter-spacing: 0.4px; white-space: nowrap;
     }
     .usage-widget .usage-counts {
-        display: flex;
-        align-items: baseline;
-        gap: 5px;
+        display: flex; align-items: baseline; gap: 5px;
         font-family: "JetBrains Mono", monospace;
-        font-size: 13px;
-        font-weight: 700;
-        color: #ffffff;
-        margin-bottom: 5px;
-        line-height: 1;
+        font-size: 13px; font-weight: 700; color: #ffffff;
+        margin-bottom: 5px; line-height: 1;
     }
-    .usage-widget .usage-counts .used { color: #0a0b66; }
-    .usage-widget .usage-counts .slash { color: #0a0b66; font-weight: 400; }
-    .usage-widget .usage-counts .left { color: #0a0b66; }
+    .usage-widget .usage-counts .used { color: #ffe5a0; }
+    .usage-widget .usage-counts .slash { color: rgba(255,255,255,0.5); font-weight: 400; }
+    .usage-widget .usage-counts .left { color: #b8f5a0; }
     .usage-widget .usage-counts .left.low { color: #ffb3b3; }
-    .usage-widget .usage-counts .suffix {
-        font-size: 10px;
-        color: #0a0b66;
-        font-weight: 500;
-        margin-left: 2px;
-    }
+    .usage-widget .usage-counts .suffix { font-size: 10px; color: rgba(255,255,255,0.7); font-weight: 500; margin-left: 2px; }
     .usage-widget .usage-bar-mini {
-        width: 100%;
-        height: 4px;
-        background: rgba(255, 255, 255, 0.61);
-        border-radius: 2px;
-        overflow: hidden;
-        margin-bottom: 5px;
+        width: 100%; height: 4px; background: rgba(0,0,0,0.2);
+        border-radius: 2px; overflow: hidden; margin-bottom: 5px;
     }
     .usage-widget .usage-bar-mini-fill {
-        height: 100%;
-        background: linear-gradient(90deg, #c40ed4, #a90c0c);
-        width: 0%;
-        transition: width 0.4s ease, background 0.4s ease;
-        border-radius: 2px;
+        height: 100%; background: linear-gradient(90deg, #a3ff6b, #ffffff);
+        width: 0%; transition: width 0.4s ease, background 0.4s ease; border-radius: 2px;
     }
     .usage-widget .usage-bar-mini-fill.warn {
         background: linear-gradient(90deg, #ffd166, #ff9a3c);
     }
     .usage-widget .usage-bar-mini-fill.critical {
         background: linear-gradient(90deg, #ff8b8b, #ff5a5a);
-        box-shadow: 0 0 6px rgba(255, 90, 90, 0.6);
+        box-shadow: 0 0 6px rgba(255,90,90,0.6);
     }
     .usage-widget .usage-bottom {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        gap: 10px;
-        font-size: 10px;
-        color: rgba(7, 108, 4, 0.85);
-        font-family: "JetBrains Mono", monospace;
-        font-weight: 600;
-        line-height: 1;
+        display: flex; justify-content: space-between; align-items: center;
+        gap: 10px; font-size: 10px; color: rgba(255,255,255,0.85);
+        font-family: "JetBrains Mono", monospace; font-weight: 600; line-height: 1;
     }
-    .usage-widget .usage-bottom .pct {
-        font-weight: 700;
-        color: rgba(7, 108, 4, 0.85);
-    }
+    .usage-widget .usage-bottom .pct { font-weight: 700; color: #ffffff; }
 
     main {
         display: grid;
@@ -443,7 +332,6 @@
         max-width: 1300px;
         margin: 0 auto;
     }
-
     .panel {
         background: var(--panel);
         border-radius: 4px;
@@ -454,7 +342,6 @@
         transition: background 0.3s ease;
     }
     .panel.wide { grid-column: 1 / -1; }
-
     .panel-header {
         padding: 14px 20px;
         border-bottom: 1px solid var(--border-3);
@@ -526,125 +413,76 @@
         padding-right: 34px;
         font-weight: 600;
     }
-
     .row { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
 
-    /* ============================================================
-       UNIFIED ADD SYMBOL BAR — single textarea + add button
-       ============================================================ */
-    .add-symbol-box {
-        margin-bottom: 14px;
-    }
-    .add-symbol-row {
-        display: flex;
-        gap: 6px;
-        align-items: stretch;
-    }
+    .add-symbol-box { margin-bottom: 14px; }
+    .add-symbol-row { display: flex; gap: 6px; align-items: stretch; }
     .add-symbol-row textarea {
-        margin-bottom: 0;
-        flex: 1;
-        min-height: 44px;
-        max-height: 120px;
-        resize: vertical;
-        line-height: 1.5;
-        padding: 10px 12px;
+        margin-bottom: 0; flex: 1; min-height: 44px; max-height: 120px;
+        resize: vertical; line-height: 1.5; padding: 10px 12px;
     }
     .add-symbol-row button {
-        white-space: nowrap;
-        background: #40be07;
-        color: #270000;
-        padding: 10px 18px;
-        border-radius: 3px;
-        font-weight: 700;
-        font-size: 12px;
-        text-transform: uppercase;
-        letter-spacing: 0.5px;
+        white-space: nowrap; background: #40be07; color: #270000;
+        padding: 10px 18px; border-radius: 3px;
+        font-weight: 700; font-size: 12px;
+        text-transform: uppercase; letter-spacing: 0.5px;
     }
     .add-symbol-row button:not(:disabled):hover { background: #cfec08; }
 
     .chip-list {
-        display: flex;
-        flex-wrap: wrap;
-        gap: 6px;
-        margin-bottom: 14px;
-        min-height: 40px;
-        padding: 10px;
+        display: flex; flex-wrap: wrap; gap: 6px;
+        margin-bottom: 14px; min-height: 40px; padding: 10px;
         background: var(--panel-alt);
-        border: 1px dashed var(--border-2);
-        border-radius: 3px;
+        border: 1px dashed var(--border-2); border-radius: 3px;
     }
     .chip-list:empty::before {
         content: "No symbols added yet.";
-        color: var(--text-3);
-        font-size: 12px;
-        font-style: italic;
+        color: var(--text-3); font-size: 12px; font-style: italic;
     }
     .chip {
-        display: inline-flex;
-        align-items: center;
-        gap: 6px;
-        background: var(--blue);
-        color: #ffffff;
-        padding: 4px 10px;
-        border-radius: 3px;
-        font-size: 11.5px;
-        font-weight: 600;
+        display: inline-flex; align-items: center; gap: 6px;
+        background: var(--blue); color: #ffffff;
+        padding: 4px 10px; border-radius: 3px;
+        font-size: 11.5px; font-weight: 600;
         font-family: "JetBrains Mono", monospace;
-        cursor: pointer;
-        transition: all 0.15s;
+        cursor: pointer; transition: all 0.15s;
     }
     .chip:hover { background: var(--blue-dark); }
     .chip.invalid { background: var(--red); }
     .chip.invalid:hover { background: var(--red-dark); cursor: default; }
     .chip button {
-        background: transparent;
-        border: none;
+        background: transparent; border: none;
         color: rgba(255, 255, 255, 0.85);
-        cursor: pointer;
-        font-size: 14px;
-        padding: 0;
-        line-height: 1;
-        font-weight: bold;
+        cursor: pointer; font-size: 14px; padding: 0;
+        line-height: 1; font-weight: bold;
     }
     .chip button:hover { color: #ffffff; }
 
     .btn-row { display: flex; gap: 8px; margin-top: 8px; flex-wrap: wrap; }
-
     button {
-        padding: 9px 18px;
-        border: none;
-        border-radius: 3px;
-        cursor: pointer;
-        font-weight: 700;
-        font-size: 12px;
-        transition: all 0.15s ease;
-        font-family: inherit;
-        text-transform: uppercase;
-        letter-spacing: 0.5px;
+        padding: 9px 18px; border: none; border-radius: 3px;
+        cursor: pointer; font-weight: 700; font-size: 12px;
+        transition: all 0.15s ease; font-family: inherit;
+        text-transform: uppercase; letter-spacing: 0.5px;
     }
     button:disabled { opacity: 0.5; cursor: not-allowed; }
     button:not(:disabled):hover { filter: brightness(0.92); }
-
     button.primary { background: #257501; color: #ffffff; }
     button.danger { background: var(--red); color: #ffffff; }
     button.secondary { background: #345edb; color: #ffffff; }
     button.warning { background: var(--yellow); color: #ffffff; }
     button.dark { background: var(--dark); color: #ffffff; }
     button.ghost {
-        background: #ffb300;
-        color: #0d0000;
+        background: #ffb300; color: #0d0000;
         border: 1px solid var(--border-2);
     }
     button.ghost:not(:disabled):hover { background: var(--border-3); filter: none; }
     button.small { padding: 6px 12px; font-size: 10.5px; margin-top: 12px; }
-    button.full { width: 100%; }
 
     .presets { display: flex; gap: 6px; margin-top: 12px; flex-wrap: wrap; }
     .presets button {
-        background: var(--bg-alt);
-        color: var(--text-2);
-        font-size: 11px;
-        padding: 6px 12px;
+        background: var(--bg-alt); color: var(--text-2);
+        font-size: 11px; padding: 6px 12px;
         border: 1px solid var(--border-2);
     }
     .presets button:hover { background: var(--blue); color: #ffffff; border-color: var(--blue); filter: none; }
@@ -657,204 +495,93 @@
         border-radius: 3px;
     }
     .io-card h4 {
-        font-size: 11.5px;
-        font-weight: 700;
-        color: var(--text-2);
-        margin-bottom: 8px;
-        text-transform: uppercase;
-        letter-spacing: 0.5px;
+        font-size: 11.5px; font-weight: 700; color: var(--text-2);
+        margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.5px;
     }
-    .io-card p {
-        font-size: 11.5px;
-        color: #6c6161;
-        margin-bottom: 10px;
-        line-height: 1.5;
-    }
+    .io-card p { font-size: 11.5px; color: #6c6161; margin-bottom: 10px; line-height: 1.5; }
     .io-card button { width: 100%; padding: 8px; font-size: 11px; }
     #fileInput { display: none; }
 
-    /* ============================================================
-       CUSTOM ALERT RULES
-       ============================================================ */
+    /* Custom Alert Rules */
     .rules-section {
-        margin-top: 4px;
-        margin-bottom: 14px;
-        padding-top: 14px;
-        border-top: 1px solid var(--border-3);
+        margin-top: 4px; margin-bottom: 14px;
+        padding-top: 14px; border-top: 1px solid var(--border-3);
     }
     .rules-section h4 {
-        font-size: 11.5px;
-        font-weight: 700;
-        color: var(--text-2);
-        margin-bottom: 10px;
-        text-transform: uppercase;
+        font-size: 11.5px; font-weight: 700; color: var(--text-2);
+        margin-bottom: 10px; text-transform: uppercase;
         letter-spacing: 0.5px;
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        gap: 8px;
+        display: flex; align-items: center; justify-content: space-between; gap: 8px;
     }
     .rules-section h4 .rules-hint {
-        font-size: 9.5px;
-        font-weight: 600;
-        color: var(--text-3);
-        text-transform: none;
-        letter-spacing: 0;
-        font-style: italic;
+        font-size: 9.5px; font-weight: 600; color: var(--text-3);
+        text-transform: none; letter-spacing: 0; font-style: italic;
     }
     .rule-add-row {
-        display: grid;
-        grid-template-columns: 2fr 1fr auto;
-        gap: 6px;
-        margin-bottom: 10px;
+        display: grid; grid-template-columns: 2fr 1fr auto;
+        gap: 6px; margin-bottom: 10px;
     }
-    .rule-add-row input {
-        margin-bottom: 0;
-        font-size: 12px;
-        padding: 8px 10px;
-    }
+    .rule-add-row input { margin-bottom: 0; font-size: 12px; padding: 8px 10px; }
     .rule-add-row button {
-        padding: 8px 14px;
-        background: var(--blue);
-        color: #ffffff;
-        white-space: nowrap;
-        font-size: 11px;
+        padding: 8px 14px; background: var(--blue); color: #ffffff;
+        white-space: nowrap; font-size: 11px;
     }
     .rule-add-row button:not(:disabled):hover { background: var(--blue-dark); }
-
     .rules-list {
-        display: flex;
-        flex-direction: column;
-        gap: 6px;
-        max-height: 160px;
-        overflow-y: auto;
+        display: flex; flex-direction: column; gap: 6px;
+        max-height: 160px; overflow-y: auto;
     }
     .rules-list::-webkit-scrollbar { width: 6px; }
-    .rules-list::-webkit-scrollbar-thumb {
-        background: var(--border-2);
-        border-radius: 3px;
-    }
+    .rules-list::-webkit-scrollbar-thumb { background: var(--border-2); border-radius: 3px; }
     .rule-item {
-        display: flex;
-        align-items: center;
-        gap: 10px;
-        padding: 8px 12px;
-        background: var(--panel-alt);
-        border: 1px solid var(--border-3);
-        border-radius: 3px;
-        font-size: 12px;
-        transition: all 0.15s;
+        display: flex; align-items: center; gap: 10px;
+        padding: 8px 12px; background: var(--panel-alt);
+        border: 1px solid var(--border-3); border-radius: 3px;
+        font-size: 12px; transition: all 0.15s;
     }
-    .rule-item:hover {
-        border-color: var(--blue);
-        box-shadow: 0 1px 4px rgba(52, 152, 219, 0.15);
-    }
+    .rule-item:hover { border-color: var(--blue); box-shadow: 0 1px 4px rgba(52, 152, 219, 0.15); }
     .rule-item .rule-symbols {
-        flex: 1;
-        font-family: "JetBrains Mono", monospace;
-        font-weight: 600;
-        color: var(--text);
-        font-size: 11.5px;
-        overflow: hidden;
-        text-overflow: ellipsis;
-        white-space: nowrap;
+        flex: 1; font-family: "JetBrains Mono", monospace;
+        font-weight: 600; color: var(--text); font-size: 11.5px;
+        overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
     }
     .rule-item .rule-threshold {
-        background: var(--yellow);
-        color: #ffffff;
-        padding: 3px 8px;
-        border-radius: 3px;
-        font-weight: 700;
-        font-family: "JetBrains Mono", monospace;
-        font-size: 11px;
-        white-space: nowrap;
+        background: var(--yellow); color: #ffffff;
+        padding: 3px 8px; border-radius: 3px;
+        font-weight: 700; font-family: "JetBrains Mono", monospace;
+        font-size: 11px; white-space: nowrap;
     }
     .rule-item .rule-remove {
-        background: transparent;
-        border: none;
-        color: var(--text-3);
-        font-size: 16px;
-        font-weight: 700;
-        cursor: pointer;
-        padding: 0 4px;
-        line-height: 1;
-        transition: color 0.15s;
+        background: transparent; border: none;
+        color: var(--text-3); font-size: 16px; font-weight: 700;
+        cursor: pointer; padding: 0 4px; line-height: 1; transition: color 0.15s;
     }
     .rule-item .rule-remove:hover { color: var(--red); }
-
     .rules-empty {
-        text-align: center;
-        color: var(--text-3);
-        font-size: 11.5px;
-        font-style: italic;
-        padding: 14px;
-        background: var(--panel-alt);
-        border: 1px dashed var(--border-2);
-        border-radius: 3px;
+        text-align: center; color: var(--text-3);
+        font-size: 11.5px; font-style: italic;
+        padding: 14px; background: var(--panel-alt);
+        border: 1px dashed var(--border-2); border-radius: 3px;
     }
-
     .rules-footer {
         margin-top: 8px;
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        font-size: 10.5px;
-        color: var(--text-3);
+        display: flex; justify-content: space-between; align-items: center;
+        font-size: 10.5px; color: var(--text-3);
         font-family: "JetBrains Mono", monospace;
     }
     .rules-footer button {
-        padding: 4px 10px;
-        font-size: 10px;
-        background: transparent;
-        color: var(--red);
+        padding: 4px 10px; font-size: 10px;
+        background: transparent; color: var(--red);
         border: 1px solid var(--red);
-        text-transform: uppercase;
-        letter-spacing: 0.4px;
+        text-transform: uppercase; letter-spacing: 0.4px;
     }
-    .rules-footer button:hover {
-        background: var(--red);
-        color: #ffffff;
-        filter: none;
-    }
-
-    .stats-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; margin-bottom: 20px; }
-    .stat-card {
-        display: flex;
-        align-items: stretch;
-        border-radius: 4px;
-        overflow: hidden;
-        color: #ffffff;
-        box-shadow: 0 1px 2px rgba(0, 0, 0, 0.08);
-    }
-    .stat-card .stat-icon {
-        width: 70px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-size: 28px;
-        background: rgba(0, 0, 0, 0.12);
-    }
-    .stat-card .stat-body { flex: 1; padding: 14px 16px; }
-    .stat-card .stat-value { font-size: 24px; font-weight: 900; line-height: 1.1; }
-    .stat-card .stat-label { font-size: 12px; opacity: 0.9; margin-top: 4px; font-weight: 500; }
-    .stat-card.green  { background: var(--green); }
-    .stat-card.blue   { background: var(--blue); }
-    .stat-card.yellow { background: var(--yellow); }
-    .stat-card.red    { background: var(--red); }
-    .stat-card.purple { background: var(--purple); }
-    .stat-card.teal   { background: var(--teal); }
+    .rules-footer button:hover { background: var(--red); color: #ffffff; filter: none; }
 
     #statusBox p {
-        margin: 8px 0;
-        font-size: 13px;
-        color: var(--text-2);
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        padding: 9px 12px;
-        background: var(--panel-alt);
-        border-radius: 3px;
-        border-left: 3px solid var(--green);
+        margin: 8px 0; font-size: 13px; color: var(--text-2);
+        display: flex; justify-content: space-between; align-items: center;
+        padding: 9px 12px; background: var(--panel-alt);
+        border-radius: 3px; border-left: 3px solid var(--green);
     }
     #statusBox strong { color: var(--text); font-weight: 700; font-size: 12px; text-transform: uppercase; letter-spacing: 0.3px; }
     #statusText { font-weight: 700; }
@@ -863,19 +590,12 @@
     .status-actions button { width: 100%; padding: 10px; }
 
     .terminal {
-        margin-top: 14px;
-        background: var(--terminal-bg);
-        border-radius: 4px;
-        border: 1px solid #000;
-        overflow: hidden;
+        margin-top: 14px; background: var(--terminal-bg);
+        border-radius: 4px; border: 1px solid #000; overflow: hidden;
     }
     .terminal-header {
-        display: flex;
-        align-items: center;
-        gap: 8px;
-        padding: 8px 12px;
-        background: #2d2d2d;
-        border-bottom: 1px solid #000;
+        display: flex; align-items: center; gap: 8px;
+        padding: 8px 12px; background: #2d2d2d; border-bottom: 1px solid #000;
     }
     .terminal-dots { display: flex; gap: 6px; }
     .terminal-dots span { width: 11px; height: 11px; border-radius: 50%; }
@@ -884,38 +604,21 @@
     .terminal-dots .dot-green  { background: #27c93f; }
     .terminal-title {
         font-family: "JetBrains Mono", monospace;
-        font-size: 11px;
-        color: #ffe5e5;
-        margin-left: 6px;
-        font-weight: 500;
+        font-size: 11px; color: #ffe5e5; margin-left: 6px; font-weight: 500;
     }
     .terminal-clear {
-        margin-left: auto;
-        background: transparent;
-        border: 1px solid #555;
-        color: #aaaaaa;
-        padding: 3px 10px;
-        border-radius: 3px;
-        font-size: 10px;
-        font-weight: 700;
-        cursor: pointer;
-        font-family: "JetBrains Mono", monospace;
-        text-transform: uppercase;
+        margin-left: auto; background: transparent;
+        border: 1px solid #555; color: #aaaaaa;
+        padding: 3px 10px; border-radius: 3px;
+        font-size: 10px; font-weight: 700; cursor: pointer;
+        font-family: "JetBrains Mono", monospace; text-transform: uppercase;
     }
-    .terminal-clear:hover {
-        background: #3d3d3d;
-        color: #ffffff;
-        border-color: #777;
-        filter: none;
-    }
+    .terminal-clear:hover { background: #3d3d3d; color: #ffffff; border-color: #777; filter: none; }
     .log-box {
-        max-height: 240px;
-        overflow-y: auto;
+        max-height: 240px; overflow-y: auto;
         padding: 10px 14px;
         font-family: "JetBrains Mono", Consolas, monospace;
-        font-size: 11.5px;
-        color: #cccccc;
-        line-height: 1.6;
+        font-size: 11.5px; color: #cccccc; line-height: 1.6;
         background: var(--terminal-bg);
     }
     .log-box .log-line { padding: 2px 0; display: flex; gap: 10px; align-items: flex-start; }
@@ -925,136 +628,63 @@
     .log-box .log-line.ok   .msg { color: #48ee00; }
     .log-box .log-line.info .msg { color: #fff; }
     .log-box .log-line.warn .msg { color: #dcdcaa; }
-
-    .log-box::-webkit-scrollbar { width: 8px; }
-    .log-box::-webkit-scrollbar-track { background: var(--terminal-bg); }
-    .log-box::-webkit-scrollbar-thumb { background: #444; border-radius: 4px; }
-    .log-box::-webkit-scrollbar-thumb:hover { background: #666; }
-
-    .validation-summary {
-        display: none;
-        background: #fdedec;
-        border: 1px solid #f5b7b1;
-        border-left: 4px solid var(--red);
-        border-radius: 3px;
-        padding: 12px 14px;
-        margin-bottom: 14px;
-    }
-    .validation-summary.show { display: block; }
-    .validation-summary h4 {
-        font-size: 12px;
-        color: var(--red-dark);
-        margin-bottom: 8px;
-        font-weight: 700;
-        text-transform: uppercase;
-        letter-spacing: 0.4px;
-    }
-    .validation-summary ul {
-        list-style: none;
-        font-size: 12px;
-        color: var(--text-2);
-        font-family: "JetBrains Mono", monospace;
-    }
-    .validation-summary li {
-        padding: 4px 0;
-        border-bottom: 1px dashed #f5b7b1;
-    }
-    .validation-summary li:last-child { border-bottom: none; }
-    .validation-summary li strong { color: var(--red-dark); }
-    .validation-summary li span { color: var(--text-3); }
+    .log-box .log-line.sync .msg { color: #c586c0; }
 
     .alerts-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
     .alerts-col h3 {
-        font-size: 12px;
-        color: var(--text-2);
-        font-weight: 700;
-        margin-bottom: 12px;
-        padding-bottom: 8px;
+        font-size: 12px; color: var(--text-2); font-weight: 700;
+        margin-bottom: 12px; padding-bottom: 8px;
         border-bottom: 2px solid var(--border-3);
-        display: flex;
-        align-items: center;
-        gap: 8px;
-        text-transform: uppercase;
-        letter-spacing: 0.5px;
+        display: flex; align-items: center; gap: 8px;
+        text-transform: uppercase; letter-spacing: 0.5px;
     }
     .alerts-col h3 .count {
-        background: var(--blue);
-        color: #ffffff;
-        padding: 2px 8px;
-        border-radius: 10px;
-        font-size: 10.5px;
-        font-weight: 700;
+        background: var(--blue); color: #ffffff;
+        padding: 2px 8px; border-radius: 10px;
+        font-size: 10.5px; font-weight: 700;
     }
     .alerts-col.hourly h3 { border-bottom-color: var(--blue); }
     .alerts-col.daily h3 { border-bottom-color: var(--purple); }
     .alerts-col.daily h3 .count { background: var(--purple); }
-
     .alert {
-        display: flex;
-        align-items: center;
-        gap: 10px;
-        padding: 11px 14px;
-        border-radius: 3px;
-        margin-bottom: 8px;
-        font-size: 13px;
-        flex-wrap: wrap;
-        cursor: pointer;
-        transition: all 0.15s;
+        display: flex; align-items: center; gap: 10px;
+        padding: 11px 14px; border-radius: 3px;
+        margin-bottom: 8px; font-size: 13px;
+        flex-wrap: wrap; cursor: pointer; transition: all 0.15s;
     }
-    .alert:hover {
-        transform: translateX(-3px);
-        box-shadow: 0 2px 8px rgba(0,0,0,0.08);
-    }
+    .alert:hover { transform: translateX(-3px); box-shadow: 0 2px 8px rgba(0,0,0,0.08); }
     .alert.pump { background: #e8f8f5; border-left: 4px solid var(--green); }
     .alert.dump { background: #fdedec; border-left: 4px solid var(--red); }
     .alert .badge {
-        background: #ffffff;
-        padding: 3px 9px;
-        border-radius: 2px;
-        font-size: 10px;
-        font-weight: 700;
-        text-transform: uppercase;
-        letter-spacing: 0.4px;
-        border: 1px solid var(--border-2);
+        background: #ffffff; padding: 3px 9px; border-radius: 2px;
+        font-size: 10px; font-weight: 700; text-transform: uppercase;
+        letter-spacing: 0.4px; border: 1px solid var(--border-2);
     }
     .alert strong { color: var(--text); font-size: 13px; font-weight: 700; }
     .alert .change {
-        font-weight: 900;
-        color: var(--yellow);
-        margin-left: auto;
-        font-family: "JetBrains Mono", monospace;
-        font-size: 14px;
+        font-weight: 900; color: var(--yellow);
+        margin-left: auto; font-family: "JetBrains Mono", monospace; font-size: 14px;
     }
     .alert .price { color: var(--text-3); font-size: 12px; font-family: "JetBrains Mono", monospace; }
     .alert .time { color: #007bcd; font-size: 11px; width: 100%; }
 
     .empty {
-        color: var(--text-3);
-        text-align: center;
-        padding: 24px 14px;
-        font-size: 12.5px;
-        font-style: italic;
-        background: var(--panel-alt);
-        border-radius: 3px;
+        color: var(--text-3); text-align: center;
+        padding: 24px 14px; font-size: 12.5px; font-style: italic;
+        background: var(--panel-alt); border-radius: 3px;
         border: 1px dashed var(--border-2);
     }
 
     table { width: 100%; border-collapse: collapse; font-size: 13px; }
     table th, table td {
-        padding: 12px 14px;
-        text-align: left;
+        padding: 12px 14px; text-align: left;
         border-bottom: 1px solid var(--border-3);
     }
     table th {
-        color: #ffffff;
-        font-weight: 700;
+        color: #ffffff; font-weight: 700;
         background: var(--table-header-bg);
-        font-size: 11px;
-        text-transform: uppercase;
-        letter-spacing: 0.6px;
-        position: sticky;
-        top: 0;
-        z-index: 1;
+        font-size: 11px; text-transform: uppercase;
+        letter-spacing: 0.6px; position: sticky; top: 0; z-index: 1;
     }
     table tbody tr { cursor: pointer; transition: background 0.15s; }
     table tbody tr:hover { background: var(--table-row-hover); }
@@ -1062,160 +692,74 @@
     table tbody tr:nth-child(even):hover { background: var(--table-row-hover); }
     table td.num { font-family: "JetBrains Mono", monospace; font-size: 12.5px; font-weight: 500; }
 
-    .table-actions {
-        display: flex;
-        gap: 6px;
-        align-items: center;
-        justify-content: center;
-    }
+    .table-actions { display: flex; gap: 6px; align-items: center; justify-content: center; }
     .chart-col-btn {
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
-        width: 30px;
-        height: 30px;
-        background: var(--blue);
-        color: #ffffff;
-        border: none;
-        border-radius: 4px;
-        font-size: 14px;
-        cursor: pointer;
-        transition: all 0.15s ease;
-        position: relative;
+        display: inline-flex; align-items: center; justify-content: center;
+        width: 30px; height: 30px; background: var(--blue); color: #ffffff;
+        border: none; border-radius: 4px; font-size: 14px;
+        cursor: pointer; transition: all 0.15s ease; position: relative;
     }
     .chart-col-btn:hover {
-        background: var(--blue-dark);
-        transform: scale(1.12);
+        background: var(--blue-dark); transform: scale(1.12);
         box-shadow: 0 2px 8px rgba(52, 152, 219, 0.45);
     }
-    .chart-col-btn.compare {
-        background: var(--purple);
-    }
+    .chart-col-btn.compare { background: var(--purple); }
     .chart-col-btn.compare:hover {
         background: var(--purple-dark);
         box-shadow: 0 2px 8px rgba(155, 89, 182, 0.45);
     }
     .chart-col-btn::after {
         content: attr(data-tooltip);
-        position: absolute;
-        bottom: 130%;
-        left: 50%;
+        position: absolute; bottom: 130%; left: 50%;
         transform: translateX(-50%) scale(0.9);
-        background: #2c3e50;
-        color: #ffffff;
-        padding: 5px 10px;
-        border-radius: 4px;
-        font-size: 10.5px;
-        font-weight: 600;
-        white-space: nowrap;
-        opacity: 0;
-        pointer-events: none;
-        transition: all 0.18s ease;
-        letter-spacing: 0.3px;
-        text-transform: uppercase;
-        box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-        z-index: 10;
+        background: #2c3e50; color: #ffffff;
+        padding: 5px 10px; border-radius: 4px;
+        font-size: 10.5px; font-weight: 600; white-space: nowrap;
+        opacity: 0; pointer-events: none; transition: all 0.18s ease;
+        letter-spacing: 0.3px; text-transform: uppercase;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.15); z-index: 10;
     }
-    .chart-col-btn::before {
-        content: "";
-        position: absolute;
-        bottom: 115%;
-        left: 50%;
-        transform: translateX(-50%);
-        border: 5px solid transparent;
-        border-top-color: #2c3e50;
-        opacity: 0;
-        pointer-events: none;
-        transition: all 0.18s ease;
-        z-index: 10;
-    }
-    .chart-col-btn:hover::after {
-        opacity: 1;
-        transform: translateX(-50%) scale(1);
-        bottom: 145%;
-    }
-    .chart-col-btn:hover::before {
-        opacity: 1;
-        bottom: 130%;
-    }
+    .chart-col-btn:hover::after { opacity: 1; transform: translateX(-50%) scale(1); bottom: 145%; }
 
     .sparkline-cell {
-        width: 110px;
-        height: 32px;
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
-        vertical-align: middle;
-        padding: 0;
+        width: 110px; height: 32px;
+        display: inline-flex; align-items: center; justify-content: center;
+        vertical-align: middle; padding: 0;
     }
-    .sparkline-cell svg {
-        width: 100%;
-        height: 100%;
-        display: block;
-        overflow: visible;
-    }
-    .sparkline-empty {
-        color: var(--text-4);
-        font-size: 11px;
-        font-family: "JetBrains Mono", monospace;
-    }
+    .sparkline-cell svg { width: 100%; height: 100%; display: block; overflow: visible; }
+    .sparkline-empty { color: var(--text-4); font-size: 11px; font-family: "JetBrains Mono", monospace; }
 
     .static-badge {
-        display: inline-block;
-        margin-left: 4px;
-        font-size: 9px;
-        color: var(--text-3);
-        background: var(--bg-alt);
-        padding: 1px 5px;
-        border-radius: 2px;
+        display: inline-block; margin-left: 4px; font-size: 9px;
+        color: var(--text-3); background: var(--bg-alt);
+        padding: 1px 5px; border-radius: 2px;
         font-family: "JetBrains Mono", monospace;
-        vertical-align: middle;
-        font-weight: 600;
+        vertical-align: middle; font-weight: 600;
     }
-
     .countdown {
-        display: inline-block;
-        background: var(--dark);
-        color: #ffffff;
-        padding: 4px 10px;
-        border-radius: 3px;
+        display: inline-block; background: var(--dark); color: #ffffff;
+        padding: 4px 10px; border-radius: 3px;
         font-family: "JetBrains Mono", monospace;
-        font-weight: 700;
-        font-size: 12px;
+        font-weight: 700; font-size: 12px;
     }
-
     .progress-bar {
-        width: 100%;
-        height: 8px;
-        background: var(--bg-alt);
-        border-radius: 4px;
-        overflow: hidden;
-        margin-top: 14px;
+        width: 100%; height: 8px; background: var(--bg-alt);
+        border-radius: 4px; overflow: hidden; margin-top: 14px;
     }
     .progress-fill {
-        height: 100%;
-        background: linear-gradient(90deg, var(--green), var(--teal));
-        width: 0%;
-        transition: width 0.5s ease;
+        height: 100%; background: linear-gradient(90deg, var(--green), var(--teal));
+        width: 0%; transition: width 0.5s ease;
     }
 
     .toast {
-        position: fixed;
-        bottom: 24px;
-        right: 24px;
-        background: var(--dark);
-        color: #ffffff;
-        padding: 14px 20px;
-        border-radius: 4px;
-        font-size: 13px;
-        font-weight: 600;
+        position: fixed; bottom: 24px; right: 24px;
+        background: var(--dark); color: #ffffff;
+        padding: 14px 20px; border-radius: 4px;
+        font-size: 13px; font-weight: 600;
         box-shadow: 0 6px 20px rgba(0, 0, 0, 0.2);
-        opacity: 0;
-        transform: translateY(20px);
-        transition: all 0.3s ease;
-        z-index: 9999;
-        pointer-events: none;
-        max-width: 380px;
+        opacity: 0; transform: translateY(20px);
+        transition: all 0.3s ease; z-index: 9999;
+        pointer-events: none; max-width: 380px;
         border-left: 4px solid var(--green);
     }
     .toast.show { opacity: 1; transform: translateY(0); }
@@ -1223,461 +767,208 @@
     .toast.error { background: var(--red-dark); border-left-color: #ffffff; }
     .toast.warn { background: var(--yellow-dark); border-left-color: #ffffff; }
 
-    /* ============================================================
-       CHART MODAL (single)
-       ============================================================ */
+    /* Chart modal */
     .chart-modal-overlay {
-        position: fixed;
-        inset: 0;
+        position: fixed; inset: 0;
         background: rgba(15, 20, 30, 0.75);
         backdrop-filter: blur(4px);
-        -webkit-backdrop-filter: blur(4px);
-        z-index: 9998;
-        display: none;
-        align-items: center;
-        justify-content: center;
-        padding: 20px;
-        opacity: 0;
-        transition: opacity 0.25s ease;
+        z-index: 9998; display: none;
+        align-items: center; justify-content: center;
+        padding: 20px; opacity: 0; transition: opacity 0.25s ease;
     }
     .chart-modal-overlay.show { display: flex; opacity: 1; }
-
     .chart-modal {
-        background: #ffffff;
-        border-radius: 6px;
-        width: 100%;
-        max-width: 1000px;
-        height: 100%;
-        max-height: 720px;
-        display: flex;
-        flex-direction: column;
+        background: #ffffff; border-radius: 6px;
+        width: 100%; max-width: 1000px;
+        height: 100%; max-height: 720px;
+        display: flex; flex-direction: column;
         overflow: hidden;
         box-shadow: 0 24px 60px rgba(0, 0, 0, 0.35);
-        transform: scale(0.94);
-        transition: transform 0.25s ease, background 0.3s;
+        transform: scale(0.94); transition: transform 0.25s ease;
     }
     .chart-modal-overlay.show .chart-modal { transform: scale(1); }
-
     .chart-modal-header {
         padding: 14px 20px;
         background: linear-gradient(135deg, var(--chart-modal-header-1), var(--chart-modal-header-2));
-        color: #ffffff;
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        gap: 12px;
-        flex-wrap: wrap;
+        color: #ffffff; display: flex; align-items: center;
+        justify-content: space-between; gap: 12px; flex-wrap: wrap;
     }
-    .chart-modal-title {
-        display: flex;
-        align-items: baseline;
-        gap: 12px;
-        flex-wrap: wrap;
-    }
-    .chart-modal-title .symbol {
-        font-size: 18px;
-        font-weight: 900;
-        letter-spacing: 0.3px;
-    }
-    .chart-modal-title .name {
-        font-size: 12.5px;
-        opacity: 0.9;
-        font-weight: 500;
-    }
+    .chart-modal-title { display: flex; align-items: baseline; gap: 12px; flex-wrap: wrap; }
+    .chart-modal-title .symbol { font-size: 18px; font-weight: 900; letter-spacing: 0.3px; }
+    .chart-modal-title .name { font-size: 12.5px; opacity: 0.9; font-weight: 500; }
     .chart-modal-actions { display: flex; gap: 8px; align-items: center; }
     .chart-modal-actions button {
-        background: rgba(255, 255, 255, 0.2);
-        color: #ffffff;
+        background: rgba(255, 255, 255, 0.2); color: #ffffff;
         border: 1px solid rgba(255, 255, 255, 0.3);
-        padding: 6px 12px;
-        font-size: 11px;
-        border-radius: 3px;
-        font-weight: 700;
-        text-transform: uppercase;
-        letter-spacing: 0.5px;
-        cursor: pointer;
-        transition: all 0.15s;
+        padding: 6px 12px; font-size: 11px;
+        border-radius: 3px; font-weight: 700;
+        text-transform: uppercase; letter-spacing: 0.5px;
+        cursor: pointer; transition: all 0.15s;
     }
-    .chart-modal-actions button:hover {
-        background: rgba(255, 255, 255, 0.35);
-        filter: none;
-    }
+    .chart-modal-actions button:hover { background: rgba(255, 255, 255, 0.35); filter: none; }
     .chart-modal-actions .close-btn {
-        width: 32px;
-        height: 32px;
-        padding: 0;
-        font-size: 18px;
-        line-height: 1;
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
+        width: 32px; height: 32px; padding: 0;
+        font-size: 18px; line-height: 1;
+        display: inline-flex; align-items: center; justify-content: center;
     }
-
     .chart-modal-body {
-        flex: 1;
-        position: relative;
-        background: #f8f9fa;
-        overflow: hidden;
+        flex: 1; position: relative; background: #f8f9fa; overflow: hidden;
     }
-    .chart-modal-body iframe {
-        width: 100%;
-        height: 100%;
-        border: none;
-        display: block;
-    }
-
+    .chart-modal-body iframe { width: 100%; height: 100%; border: none; display: block; }
     .chart-loading {
-        position: absolute;
-        inset: 0;
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        justify-content: center;
-        background: #f8f9fa;
-        color: var(--text-3);
-        gap: 14px;
-        z-index: 2;
+        position: absolute; inset: 0;
+        display: flex; flex-direction: column;
+        align-items: center; justify-content: center;
+        background: #f8f9fa; color: var(--text-3); gap: 14px; z-index: 2;
     }
     .chart-loading .spinner {
-        width: 38px;
-        height: 38px;
+        width: 38px; height: 38px;
         border: 3px solid var(--border-3);
-        border-top-color: var(--green);
-        border-radius: 50%;
+        border-top-color: var(--green); border-radius: 50%;
         animation: spin 0.9s linear infinite;
     }
     @keyframes spin { to { transform: rotate(360deg); } }
-    .chart-loading p { font-size: 12.5px; }
-
     .chart-modal-footer {
-        background: #ffffff;
-        border-top: 1px solid var(--border-3);
-        padding: 14px 20px;
-        display: grid;
-        grid-template-columns: repeat(3, 1fr);
-        gap: 14px;
+        background: #ffffff; border-top: 1px solid var(--border-3);
+        padding: 14px 20px; display: grid;
+        grid-template-columns: repeat(3, 1fr); gap: 14px;
     }
     .chart-stat {
         background: var(--panel-alt);
         border-left: 4px solid var(--green);
-        border-radius: 3px;
-        padding: 10px 14px;
+        border-radius: 3px; padding: 10px 14px;
     }
     .chart-stat .label {
-        font-size: 10.5px;
-        color: var(--text-3);
-        font-weight: 700;
-        text-transform: uppercase;
-        letter-spacing: 0.5px;
-        margin-bottom: 4px;
+        font-size: 10.5px; color: var(--text-3);
+        font-weight: 700; text-transform: uppercase;
+        letter-spacing: 0.5px; margin-bottom: 4px;
     }
-    .chart-stat .value {
-        font-size: 18px;
-        font-weight: 900;
-        font-family: "JetBrains Mono", monospace;
-    }
+    .chart-stat .value { font-size: 18px; font-weight: 900; font-family: "JetBrains Mono", monospace; }
     .chart-stat.pump { border-left-color: var(--green); }
     .chart-stat.dump { border-left-color: var(--red); }
     .chart-stat.neutral { border-left-color: var(--text-4); }
     .chart-stat.pump .value { color: var(--green-dark); }
     .chart-stat.dump .value { color: var(--red-dark); }
 
-    /* ============================================================
-       COMPARE MODAL
-       ============================================================ */
+    /* Compare modal */
     .compare-modal {
-        background: #ffffff;
-        border-radius: 6px;
-        width: 100%;
-        max-width: 1300px;
-        height: 100%;
-        max-height: 800px;
-        display: flex;
-        flex-direction: column;
-        overflow: hidden;
+        background: #ffffff; border-radius: 6px;
+        width: 100%; max-width: 1300px;
+        height: 100%; max-height: 800px;
+        display: flex; flex-direction: column; overflow: hidden;
         box-shadow: 0 24px 60px rgba(0, 0, 0, 0.35);
-        transform: scale(0.94);
-        transition: transform 0.25s ease, background 0.3s;
+        transform: scale(0.94); transition: transform 0.25s ease;
     }
     .chart-modal-overlay.show .compare-modal { transform: scale(1); }
-
     .compare-modal-header {
         padding: 14px 20px;
         background: linear-gradient(135deg, #4a148c, #7c3aed);
-        color: #ffffff;
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        gap: 12px;
-        flex-wrap: wrap;
+        color: #ffffff; display: flex; align-items: center;
+        justify-content: space-between; gap: 12px; flex-wrap: wrap;
     }
-    .compare-modal-title {
-        display: flex;
-        align-items: center;
-        gap: 10px;
-        font-size: 16px;
-        font-weight: 900;
-        letter-spacing: 0.3px;
-    }
+    .compare-modal-title { display: flex; align-items: center; gap: 10px; font-size: 16px; font-weight: 900; }
     .compare-modal-body {
-        flex: 1;
-        display: grid;
+        flex: 1; display: grid;
         grid-template-columns: 1fr auto 1fr;
-        gap: 0;
-        background: #f8f9fa;
-        overflow: hidden;
-        min-height: 0;
+        gap: 0; background: #f8f9fa;
+        overflow: hidden; min-height: 0;
     }
-    .compare-pane {
-        display: flex;
-        flex-direction: column;
-        overflow: hidden;
-        min-height: 0;
-    }
+    .compare-pane { display: flex; flex-direction: column; overflow: hidden; min-height: 0; }
     .compare-pane-header {
-        padding: 10px 14px;
-        background: #ffffff;
+        padding: 10px 14px; background: #ffffff;
         border-bottom: 1px solid var(--border-3);
-        display: flex;
-        flex-direction: column;
-        gap: 8px;
+        display: flex; flex-direction: column; gap: 8px;
     }
-    .compare-pane-row {
-        display: flex;
-        align-items: center;
-        gap: 8px;
-        flex-wrap: wrap;
-    }
-    .compare-pane-header label {
-        margin-bottom: 0;
-        font-size: 10.5px;
-        color: var(--text-3);
-    }
+    .compare-pane-row { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+    .compare-pane-header label { margin-bottom: 0; font-size: 10.5px; color: var(--text-3); }
     .compare-pane-header select {
-        margin-bottom: 0;
-        padding: 6px 30px 6px 10px;
-        font-size: 12px;
-        background-size: 12px;
-        background-position: right 8px center;
-        flex: 1;
-        min-width: 120px;
+        margin-bottom: 0; padding: 6px 30px 6px 10px;
+        font-size: 12px; background-size: 12px;
+        background-position: right 8px center; flex: 1; min-width: 120px;
     }
     .compare-pane-header .pane-symbol {
         font-family: "JetBrains Mono", monospace;
-        font-weight: 900;
-        font-size: 13px;
-        color: var(--text);
-        padding: 4px 10px;
-        background: var(--panel-alt);
-        border-radius: 3px;
-        white-space: nowrap;
+        font-weight: 900; font-size: 13px; color: var(--text);
+        padding: 4px 10px; background: var(--panel-alt);
+        border-radius: 3px; white-space: nowrap;
     }
-    /* Custom symbol add row inside compare pane */
-    .compare-custom-row {
-        display: flex;
-        gap: 6px;
-        align-items: center;
-    }
-    .compare-custom-row input {
-        flex: 1;
-        margin-bottom: 0;
-        padding: 6px 10px;
-        font-size: 11.5px;
-    }
+    .compare-custom-row { display: flex; gap: 6px; align-items: center; }
+    .compare-custom-row input { flex: 1; margin-bottom: 0; padding: 6px 10px; font-size: 11.5px; }
     .compare-custom-row button {
-        padding: 6px 12px;
-        font-size: 10.5px;
-        background: var(--purple);
-        color: #ffffff;
-        white-space: nowrap;
+        padding: 6px 12px; font-size: 10.5px;
+        background: var(--purple); color: #ffffff; white-space: nowrap;
     }
-    .compare-custom-row button:not(:disabled):hover {
-        background: var(--purple-dark);
+    .compare-custom-row button:not(:disabled):hover { background: var(--purple-dark); }
+    .compare-pane-body { flex: 1; position: relative; background: #ffffff; overflow: hidden; min-height: 0; }
+    .compare-pane-body iframe { width: 100%; height: 100%; border: none; display: block; }
+    .compare-placeholder {
+        position: absolute; inset: 0;
+        display: flex; flex-direction: column;
+        align-items: center; justify-content: center;
+        gap: 14px; background: var(--panel-alt);
+        color: var(--text-3); text-align: center;
+        padding: 30px; z-index: 3;
     }
-
-    .compare-pane-body {
-        flex: 1;
-        position: relative;
-        background: #ffffff;
-        overflow: hidden;
-        min-height: 0;
+    .compare-placeholder .ph-icon { font-size: 48px; opacity: 0.5; line-height: 1; }
+    .compare-placeholder .ph-title { font-size: 15px; font-weight: 700; color: var(--text-2); }
+    .compare-placeholder .ph-hint { font-size: 12px; color: var(--text-3); max-width: 260px; line-height: 1.5; }
+    .compare-placeholder.hidden { display: none; }
+    .compare-error {
+        position: absolute; inset: 0;
+        display: flex; flex-direction: column;
+        align-items: center; justify-content: center;
+        gap: 12px; background: var(--panel-alt);
+        color: var(--text-3); text-align: center;
+        padding: 30px; z-index: 3;
     }
-    .compare-pane-body iframe {
-        width: 100%;
-        height: 100%;
-        border: none;
-        display: block;
+    .compare-error .err-icon { font-size: 42px; opacity: 0.6; line-height: 1; }
+    .compare-error .err-title { font-size: 14px; font-weight: 700; color: var(--text-2); }
+    .compare-error .err-hint { font-size: 11.5px; color: var(--text-3); max-width: 260px; line-height: 1.5; }
+    .compare-error button {
+        margin-top: 6px; background: var(--purple); color: #ffffff;
+        padding: 8px 18px; font-size: 11px;
+        border-radius: 3px; border: none;
+        cursor: pointer; font-weight: 700;
+        text-transform: uppercase; letter-spacing: 0.5px;
     }
-	/* ---- Compare pane placeholder ---- */
-.compare-placeholder {
-    position: absolute;
-    inset: 0;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    gap: 14px;
-    background: var(--panel-alt);
-    color: var(--text-3);
-    text-align: center;
-    padding: 30px;
-    z-index: 3;
-}
-.compare-placeholder .ph-icon {
-    font-size: 48px;
-    opacity: 0.5;
-    line-height: 1;
-}
-.compare-placeholder .ph-title {
-    font-size: 15px;
-    font-weight: 700;
-    color: var(--text-2);
-}
-.compare-placeholder .ph-hint {
-    font-size: 12px;
-    color: var(--text-3);
-    max-width: 260px;
-    line-height: 1.5;
-}
-.compare-placeholder.hidden {
-    display: none;
-}
-
-/* Retry overlay (shown when chart fails to load) */
-.compare-error {
-    position: absolute;
-    inset: 0;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    gap: 12px;
-    background: var(--panel-alt);
-    color: var(--text-3);
-    text-align: center;
-    padding: 30px;
-    z-index: 3;
-}
-.compare-error .err-icon {
-    font-size: 42px;
-    opacity: 0.6;
-    line-height: 1;
-}
-.compare-error .err-title {
-    font-size: 14px;
-    font-weight: 700;
-    color: var(--text-2);
-}
-.compare-error .err-hint {
-    font-size: 11.5px;
-    color: var(--text-3);
-    max-width: 260px;
-    line-height: 1.5;
-}
-.compare-error button {
-    margin-top: 6px;
-    background: var(--purple);
-    color: #ffffff;
-    padding: 8px 18px;
-    font-size: 11px;
-    border-radius: 3px;
-    border: none;
-    cursor: pointer;
-    font-weight: 700;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-}
-.compare-error button:hover {
-    background: var(--purple-dark);
-    filter: none;
-}
-
-/* Loading spinner color for compare panes */
-.compare-pane-body .chart-loading {
-    z-index: 4;
-}
+    .compare-error button:hover { background: var(--purple-dark); filter: none; }
+    .compare-pane-body .chart-loading { z-index: 4; }
     .compare-pane-footer {
-        background: #ffffff;
-        border-top: 1px solid var(--border-3);
-        padding: 10px 14px;
-        display: grid;
-        grid-template-columns: repeat(3, 1fr);
-        gap: 8px;
+        background: #ffffff; border-top: 1px solid var(--border-3);
+        padding: 10px 14px; display: grid;
+        grid-template-columns: repeat(3, 1fr); gap: 8px;
     }
     .compare-pane-footer .chart-stat { padding: 8px 10px; }
     .compare-pane-footer .chart-stat .label { font-size: 9px; }
     .compare-pane-footer .chart-stat .value { font-size: 14px; }
     .compare-divider {
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        justify-content: center;
-        padding: 0 8px;
-        background: #f8f9fa;
+        display: flex; flex-direction: column;
+        align-items: center; justify-content: center;
+        padding: 0 8px; background: #f8f9fa;
     }
     .compare-swap-btn {
-        width: 40px;
-        height: 40px;
-        border-radius: 50%;
-        background: var(--purple);
-        color: #ffffff;
-        border: 3px solid #ffffff;
-        font-size: 18px;
-        font-weight: 900;
-        cursor: pointer;
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
+        width: 40px; height: 40px; border-radius: 50%;
+        background: var(--purple); color: #ffffff;
+        border: 3px solid #ffffff; font-size: 18px; font-weight: 900;
+        cursor: pointer; display: inline-flex;
+        align-items: center; justify-content: center;
         box-shadow: 0 4px 14px rgba(124, 58, 237, 0.4);
-        transition: all 0.25s ease;
-        padding: 0;
+        transition: all 0.25s ease; padding: 0;
     }
     .compare-swap-btn:hover {
         background: var(--purple-dark);
-        transform: rotate(180deg) scale(1.1);
-        filter: none;
+        transform: rotate(180deg) scale(1.1); filter: none;
     }
 
-    @media (max-width: 900px) {
-        .compare-modal-body {
-            grid-template-columns: 1fr;
-            grid-template-rows: 1fr auto 1fr;
-        }
-        .compare-divider {
-            padding: 8px 0;
-            flex-direction: row;
-        }
-        .compare-swap-btn:hover {
-            transform: rotate(90deg) scale(1.1);
-        }
-        .compare-modal {
-            max-height: 95vh;
-        }
-    }
+    /* Sync indicator in log */
+    .log-line.sync .ts { color: #c586c0; }
 
-    @keyframes gradientSweep {
-        0%   { background-position: 100% 0; }
-        100% { background-position: -100% 0; }
-    }
-    button.danger.pulsing:not(:disabled) {
-        background: linear-gradient(
-            90deg,
-            #e74c3c 0%,
-            #e74c3c 40%,
-            #ff6b5a 50%,
-            #e74c3c 60%,
-            #e74c3c 100%
-        );
-        background-size: 300% 100%;
-        animation: gradientSweep 8s ease-in-out infinite;
-    }
-
+    /* Responsive */
     @media (max-width: 900px) {
         body { padding: 14px; }
         main { grid-template-columns: 1fr; gap: 16px; }
         .row { grid-template-columns: 1fr; }
         .alerts-grid { grid-template-columns: 1fr; }
-        .stats-row { grid-template-columns: 1fr 1fr; }
         header { padding: 14px 18px; }
         header h1 { font-size: 18px; }
         .usage-widget { min-width: 0; width: 100%; }
@@ -1685,15 +976,48 @@
         .chart-modal { max-height: 90vh; }
         .sparkline-cell { width: 70px; }
         .rule-add-row { grid-template-columns: 1fr; }
+        .compare-modal-body { grid-template-columns: 1fr; grid-template-rows: 1fr auto 1fr; }
+        .compare-divider { padding: 8px 0; flex-direction: row; }
     }
-    @media (max-width: 500px) {
-        .stats-row { grid-template-columns: 1fr; }
+
+    @keyframes gradientSweep {
+        0%   { background-position: 100% 0; }
+        100% { background-position: -100% 0; }
+    }
+    button.danger.pulsing:not(:disabled) {
+        background: linear-gradient(90deg, #e74c3c 0%, #e74c3c 40%, #ff6b5a 50%, #e74c3c 60%, #e74c3c 100%);
+        background-size: 300% 100%;
+        animation: gradientSweep 8s ease-in-out infinite;
     }
 </style>
 </head>
 <body>
 
-<!-- ==================== HEADER ==================== -->
+<!-- ==================== LOCK SCREEN ==================== -->
+<div class="lock-screen" id="lockScreen">
+    <div class="lock-box">
+        <div class="lock-icon">🔒</div>
+        <div class="lock-title">Crypto Monitor</div>
+        <div class="lock-subtitle">Enter your 4-digit access code</div>
+        <input
+            type="password"
+            class="lock-input"
+            id="lockInput"
+            maxlength="4"
+            inputmode="numeric"
+            pattern="[0-9]*"
+            autocomplete="off"
+            placeholder="••••"
+        >
+        <button class="lock-btn" id="lockBtn">Unlock</button>
+        <div class="lock-error" id="lockError"></div>
+        <div class="lock-hint">Default code: <b>1234</b> — change it in the source code</div>
+    </div>
+</div>
+
+<!-- ==================== MAIN APP ==================== -->
+<div id="appRoot">
+
 <header>
     <div class="header-title">
         <h1>🚀 Crypto Pump &amp; Dump Monitor</h1>
@@ -1701,7 +1025,6 @@
     </div>
 
     <div class="header-right">
-        <!-- API Usage Widget (unchanged) -->
         <div class="usage-widget" id="usageWidget" title="Twelve Data API daily quota">
             <div class="usage-icon">📡</div>
             <div class="usage-body">
@@ -1725,18 +1048,17 @@
             </div>
         </div>
 
-        <button class="theme-toggle" id="themeToggle" title="Toggle light/dark theme">🌙</button>
+        <button class="lock-toggle" id="lockToggleBtn" title="Lock">🔒</button>
+        <button class="theme-toggle" id="themeToggle" title="Toggle theme">🌙</button>
     </div>
 </header>
 
 <main>
-    <!-- ==================== Settings Panel ==================== -->
     <section class="panel">
         <div class="panel-header">
             <h2><span class="icon">⚙</span> Settings</h2>
         </div>
         <div class="panel-body">
-            <!-- ===== UNIFIED: Add symbols (single + multiple in one box) ===== -->
             <label>Add symbols (one per line, e.g. BTC/USD):</label>
             <div class="add-symbol-box">
                 <div class="add-symbol-row">
@@ -1748,12 +1070,11 @@
             <label>Active symbols (<span id="symbolCount">0</span>):</label>
             <div class="chip-list" id="chipList"></div>
 
-            <div class="validation-summary" id="validationSummary">
+            <div class="validation-summary" id="validationSummary" style="display:none;">
                 <h4>⚠️ Invalid symbols found</h4>
                 <ul id="validationList"></ul>
             </div>
 
-            <!-- ===== Custom Alert Rules (moved up) ===== -->
             <div class="rules-section">
                 <h4>
                     <span>🎯 Custom Alert Rules</span>
@@ -1800,6 +1121,7 @@
                 <button id="stopBtn" class="danger" disabled>⏹ Stop</button>
                 <button id="validateBtn" class="secondary">🔍 Validate</button>
                 <button id="checkNowBtn" class="ghost">⚡ Full Rescan</button>
+                <button id="rollupBtn" class="ghost">📊 Rollup &amp; Cleanup</button>
             </div>
 
             <div class="presets">
@@ -1811,7 +1133,7 @@
             <div class="io-section">
                 <div class="io-card">
                     <h4>📥 Import from file</h4>
-                    <p>Upload a CSV/XLSX with a column of symbols (e.g. BTC/USD). Each symbol will be validated before being added.</p>
+                    <p>Upload CSV/XLSX with symbols. Each will be validated before adding.</p>
                     <input type="file" id="fileInput" accept=".csv,.xlsx,.xls">
                     <button class="ghost" id="importBtn">Choose File</button>
                 </div>
@@ -1819,7 +1141,6 @@
         </div>
     </section>
 
-    <!-- ==================== Status Panel ==================== -->
     <section class="panel">
         <div class="panel-header">
             <h2><span class="icon" style="background:var(--blue)">📊</span> Status</h2>
@@ -1831,6 +1152,7 @@
                 <p><strong>Next run in</strong> <span id="countdown" class="countdown">-</span></p>
                 <p><strong>24h alerts</strong> <span id="alertCountDaily">0</span></p>
                 <p><strong>1h/15m alerts</strong> <span id="alertCountHourly">0</span></p>
+                <p><strong>Cloud sync</strong> <span id="syncStatus">⚪ Idle</span></p>
             </div>
             <div class="progress-bar"><div class="progress-fill" id="progressFill"></div></div>
 
@@ -1854,7 +1176,6 @@
         </div>
     </section>
 
-    <!-- ==================== Alerts Panel ==================== -->
     <section class="panel wide">
         <div class="panel-header">
             <h2><span class="icon" style="background:var(--red)">🚨</span> Pump/Dump Alerts</h2>
@@ -1877,7 +1198,6 @@
         </div>
     </section>
 
-    <!-- ==================== Prices Panel ==================== -->
     <section class="panel wide">
         <div class="panel-header">
             <h2><span class="icon" style="background:var(--purple)">💰</span> Latest Recorded Prices</h2>
@@ -1905,9 +1225,9 @@
     </section>
 </main>
 
-<!-- ==================== SINGLE CHART MODAL ==================== -->
+<!-- Single Chart Modal -->
 <div class="chart-modal-overlay" id="chartModalOverlay">
-    <div class="chart-modal" id="chartModal">
+    <div class="chart-modal">
         <div class="chart-modal-header">
             <div class="chart-modal-title">
                 <span class="symbol" id="chartModalSymbol">BTC/USD</span>
@@ -1918,14 +1238,12 @@
                 <button class="close-btn" id="chartModalClose" title="Close (Esc)">✕</button>
             </div>
         </div>
-
         <div class="chart-modal-body" id="chartModalBody">
             <div class="chart-loading" id="chartLoading">
                 <div class="spinner"></div>
                 <p>Loading chart...</p>
             </div>
         </div>
-
         <div class="chart-modal-footer">
             <div class="chart-stat neutral" id="chartStat15m">
                 <div class="label">15M Change</div>
@@ -1943,20 +1261,16 @@
     </div>
 </div>
 
-<!-- ==================== COMPARE MODAL ==================== -->
+<!-- Compare Modal -->
 <div class="chart-modal-overlay" id="compareModalOverlay">
     <div class="compare-modal">
         <div class="compare-modal-header">
-            <div class="compare-modal-title">
-                <span>⚖️ Compare Charts</span>
-            </div>
+            <div class="compare-modal-title"><span>⚖️ Compare Charts</span></div>
             <div class="chart-modal-actions">
                 <button class="close-btn" id="compareModalClose" title="Close (Esc)">✕</button>
             </div>
         </div>
-
         <div class="compare-modal-body">
-            <!-- LEFT PANE -->
             <div class="compare-pane">
                 <div class="compare-pane-header">
                     <div class="compare-pane-row">
@@ -1966,37 +1280,23 @@
                     </div>
                     <div class="compare-custom-row">
                         <input type="text" id="leftCustomInput" placeholder="Or type custom, e.g. XRP/USD" autocomplete="off">
-                        <button id="leftCustomAddBtn" title="Load custom symbol">+ Load</button>
+                        <button id="leftCustomAddBtn">+ Load</button>
                     </div>
                 </div>
                 <div class="compare-pane-body" id="leftPaneBody">
                     <div class="chart-loading" id="leftPaneLoading">
-                        <div class="spinner"></div>
-                        <p>Loading...</p>
+                        <div class="spinner"></div><p>Loading...</p>
                     </div>
                 </div>
                 <div class="compare-pane-footer">
-                    <div class="chart-stat neutral" id="leftStat15m">
-                        <div class="label">15M</div>
-                        <div class="value">-</div>
-                    </div>
-                    <div class="chart-stat neutral" id="leftStat1h">
-                        <div class="label">1H</div>
-                        <div class="value">-</div>
-                    </div>
-                    <div class="chart-stat neutral" id="leftStat24h">
-                        <div class="label">24H</div>
-                        <div class="value">-</div>
-                    </div>
+                    <div class="chart-stat neutral" id="leftStat15m"><div class="label">15M</div><div class="value">-</div></div>
+                    <div class="chart-stat neutral" id="leftStat1h"><div class="label">1H</div><div class="value">-</div></div>
+                    <div class="chart-stat neutral" id="leftStat24h"><div class="label">24H</div><div class="value">-</div></div>
                 </div>
             </div>
-
-            <!-- DIVIDER + SWAP -->
             <div class="compare-divider">
-                <button class="compare-swap-btn" id="compareSwapBtn" title="Swap left and right charts">⇄</button>
+                <button class="compare-swap-btn" id="compareSwapBtn" title="Swap">⇄</button>
             </div>
-
-            <!-- RIGHT PANE -->
             <div class="compare-pane">
                 <div class="compare-pane-header">
                     <div class="compare-pane-row">
@@ -2006,34 +1306,23 @@
                     </div>
                     <div class="compare-custom-row">
                         <input type="text" id="rightCustomInput" placeholder="Or type custom, e.g. DOGE/USD" autocomplete="off">
-                        <button id="rightCustomAddBtn" title="Load custom symbol">+ Load</button>
+                        <button id="rightCustomAddBtn">+ Load</button>
                     </div>
                 </div>
-                               <div class="compare-pane-body" id="rightPaneBody">
+                <div class="compare-pane-body" id="rightPaneBody">
                     <div class="chart-loading" id="rightPaneLoading" style="display: none;">
-                        <div class="spinner"></div>
-                        <p>Loading...</p>
+                        <div class="spinner"></div><p>Loading...</p>
                     </div>
-                    <!-- Placeholder shown until user picks a symbol -->
                     <div class="compare-placeholder" id="rightPanePlaceholder">
                         <div class="ph-icon">⇄</div>
                         <div class="ph-title">Choose a symbol to compare</div>
-                        <div class="ph-hint">Pick from the dropdown above or type a custom symbol to load the second chart.</div>
+                        <div class="ph-hint">Pick from the dropdown above or type a custom symbol.</div>
                     </div>
                 </div>
                 <div class="compare-pane-footer">
-                    <div class="chart-stat neutral" id="rightStat15m">
-                        <div class="label">15M</div>
-                        <div class="value">-</div>
-                    </div>
-                    <div class="chart-stat neutral" id="rightStat1h">
-                        <div class="label">1H</div>
-                        <div class="value">-</div>
-                    </div>
-                    <div class="chart-stat neutral" id="rightStat24h">
-                        <div class="label">24H</div>
-                        <div class="value">-</div>
-                    </div>
+                    <div class="chart-stat neutral" id="rightStat15m"><div class="label">15M</div><div class="value">-</div></div>
+                    <div class="chart-stat neutral" id="rightStat1h"><div class="label">1H</div><div class="value">-</div></div>
+                    <div class="chart-stat neutral" id="rightStat24h"><div class="label">24H</div><div class="value">-</div></div>
                 </div>
             </div>
         </div>
@@ -2042,17 +1331,432 @@
 
 <div class="toast" id="toast"></div>
 
+</div><!-- /#appRoot -->
+
 <script>
-/* ==================== Configuration ==================== */
+/* ============================================================
+   CONFIGURATION
+   ============================================================ */
 const API_KEY = "c0e323f999e946fe85064cba572391e2";
 const SERIES_URL = "https://api.twelvedata.com/time_series";
 const SEARCH_URL = "https://api.twelvedata.com/symbol_search";
 
-const MIN_INTERVAL_MS = 1000;
+const MIN_INTERVAL_MS = 8500;
 let lastRequestTime = 0;
 let requestQueue = Promise.resolve();
 let rateLimitCooldownUntil = 0;
 
+/* ---- Supabase ---- */
+const SUPABASE_URL = "https://buowqguzsrychwoxyqby.supabase.co";
+const SUPABASE_ANON_KEY = "sb_publishable_Miw4tQ0ppv9S8_bWkrFLIQ_JaCda5jc";
+const SUPABASE_SCHEMA = "crypto_monitor";
+
+/* چون Auth نداریم، از یه UUID ثابت استفاده می‌کنیم.
+   همه داده‌ها زیر این user_id ذخیره می‌شن. */
+const STATIC_USER_ID = "00000000-0000-0000-0000-000000000001";
+
+/* رمز ۴ رقمی — می‌تونی اینجا عوض کنی */
+const PORTAL_CODE = "1234";
+const UNLOCK_KEY = "cryptoMonitorUnlocked";
+
+/* ============================================================
+   LOCK SCREEN
+   ============================================================ */
+function initLockScreen() {
+    const lockScreen = document.getElementById("lockScreen");
+    const lockInput = document.getElementById("lockInput");
+    const lockBtn = document.getElementById("lockBtn");
+    const lockError = document.getElementById("lockError");
+    const appRoot = document.getElementById("appRoot");
+
+    // اگر قبلاً رمز زده، صفحه قفل رو نشون نده
+    try {
+        if (localStorage.getItem(UNLOCK_KEY) === "yes") {
+            lockScreen.classList.add("hidden");
+            appRoot.classList.add("unlocked");
+            return;
+        }
+    } catch (e) {}
+
+    function tryUnlock() {
+        const val = lockInput.value.trim();
+        if (val === PORTAL_CODE) {
+            try { localStorage.setItem(UNLOCK_KEY, "yes"); } catch (e) {}
+            lockError.textContent = "";
+            lockScreen.classList.add("hidden");
+            appRoot.classList.add("unlocked");
+            // Bootstrap Supabase after unlock
+            startApp();
+        } else {
+            lockInput.classList.add("error");
+            lockError.textContent = "Incorrect code. Try again.";
+            lockInput.value = "";
+            setTimeout(() => lockInput.classList.remove("error"), 500);
+        }
+    }
+
+    lockBtn.onclick = tryUnlock;
+    lockInput.addEventListener("keydown", (e) => {
+        if (e.key === "Enter") tryUnlock();
+    });
+
+    // فقط عدد قبول کن
+    lockInput.addEventListener("input", (e) => {
+        e.target.value = e.target.value.replace(/[^0-9]/g, "").slice(0, 4);
+    });
+
+    lockInput.focus();
+}
+
+function lockPortal() {
+    try { localStorage.removeItem(UNLOCK_KEY); } catch (e) {}
+    location.reload();
+}
+
+/* ============================================================
+   SUPABASE CLIENT
+   ============================================================ */
+let supabaseClient = null;
+
+function initSupabaseClient() {
+    try {
+        if (typeof window.supabase === "undefined") {
+            console.warn("Supabase SDK not loaded");
+            return false;
+        }
+        supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+            auth: { persistSession: false },
+            db: { schema: SUPABASE_SCHEMA }
+        });
+        console.log("Supabase client ready");
+        return true;
+    } catch (e) {
+        console.error("Supabase init error:", e);
+        return false;
+    }
+}
+
+function supaReady() {
+    return supabaseClient !== null;
+}
+
+/* ============================================================
+   SUPABASE — LOAD
+   ============================================================ */
+async function supaLoadSettings() {
+    if (!supaReady()) return null;
+    const { data, error } = await supabaseClient
+        .from("app_settings")
+        .select("*")
+        .eq("user_id", STATIC_USER_ID)
+        .maybeSingle();
+    if (error && error.code !== "PGRST116") {
+        log(`⚠ Load settings: ${error.message}`, "warn");
+        return null;
+    }
+    return data;
+}
+
+async function supaLoadActiveSymbols() {
+    if (!supaReady()) return [];
+    const { data, error } = await supabaseClient
+        .from("active_symbols")
+        .select("symbol")
+        .eq("user_id", STATIC_USER_ID);
+    if (error) { log(`⚠ Load symbols: ${error.message}`, "warn"); return []; }
+    return (data || []).map(r => r.symbol);
+}
+
+async function supaLoadAlertRules() {
+    if (!supaReady()) return {};
+    const { data, error } = await supabaseClient
+        .from("alert_rules")
+        .select("symbol, threshold")
+        .eq("user_id", STATIC_USER_ID);
+    if (error) return {};
+    const out = {};
+    (data || []).forEach(r => { out[r.symbol] = parseFloat(r.threshold); });
+    return out;
+}
+
+async function supaLoadCustomCompareSymbols() {
+    if (!supaReady()) return [];
+    const { data, error } = await supabaseClient
+        .from("custom_compare_symbols")
+        .select("symbol")
+        .eq("user_id", STATIC_USER_ID);
+    if (error) return [];
+    return (data || []).map(r => r.symbol);
+}
+
+async function supaLoadLatestSnapshots() {
+    if (!supaReady()) return [];
+    const { data, error } = await supabaseClient
+        .from("latest_prices")
+        .select("*")
+        .eq("user_id", STATIC_USER_ID);
+    if (error) return [];
+    return data || [];
+}
+
+async function supaLoadRecentAlerts(limit = 100) {
+    if (!supaReady()) return [];
+    const { data, error } = await supabaseClient
+        .from("alerts")
+        .select("*")
+        .eq("user_id", STATIC_USER_ID)
+        .order("alerted_at", { ascending: false })
+        .limit(limit);
+    if (error) return [];
+    return data || [];
+}
+
+async function supaLoadUsage() {
+    if (!supaReady()) return null;
+    const { data, error } = await supabaseClient
+        .from("today_usage")
+        .select("*")
+        .eq("user_id", STATIC_USER_ID)
+        .maybeSingle();
+    if (error) return null;
+    return data;
+}
+
+/* ============================================================
+   SUPABASE — SAVE
+   ============================================================ */
+async function supaUpsertSetting(fields) {
+    if (!supaReady()) return false;
+    try {
+        const existing = await supaLoadSettings();
+        if (existing && existing.id) {
+            const { error } = await supabaseClient
+                .from("app_settings")
+                .update({ ...fields, updated_at: new Date().toISOString() })
+                .eq("id", existing.id);
+            if (error) { log(`⚠ Save settings: ${error.message}`, "warn"); return false; }
+        } else {
+            const { error } = await supabaseClient
+                .from("app_settings")
+                .insert({ ...fields, user_id: STATIC_USER_ID });
+            if (error) { log(`⚠ Insert settings: ${error.message}`, "warn"); return false; }
+        }
+        return true;
+    } catch (e) { return false; }
+}
+
+async function supaSaveSymbol(symbol) {
+    if (!supaReady()) return;
+    const { error } = await supabaseClient
+        .from("active_symbols")
+        .upsert(
+            { user_id: STATIC_USER_ID, symbol },
+            { onConflict: "user_id,symbol", ignoreDuplicates: true }
+        );
+    if (error && !String(error.message).includes("duplicate")) {
+        // silent fail
+    }
+}
+
+async function supaRemoveSymbol(symbol) {
+    if (!supaReady()) return;
+    await supabaseClient
+        .from("active_symbols")
+        .delete()
+        .eq("user_id", STATIC_USER_ID)
+        .eq("symbol", symbol);
+}
+
+async function supaSaveRule(symbol, threshold) {
+    if (!supaReady()) return;
+    await supabaseClient
+        .from("alert_rules")
+        .upsert(
+            { user_id: STATIC_USER_ID, symbol, threshold },
+            { onConflict: "user_id,symbol" }
+        );
+}
+
+async function supaRemoveRule(symbol) {
+    if (!supaReady()) return;
+    await supabaseClient
+        .from("alert_rules")
+        .delete()
+        .eq("user_id", STATIC_USER_ID)
+        .eq("symbol", symbol);
+}
+
+async function supaSaveCustomSymbol(symbol) {
+    if (!supaReady()) return;
+    await supabaseClient
+        .from("custom_compare_symbols")
+        .upsert(
+            { user_id: STATIC_USER_ID, symbol },
+            { onConflict: "user_id,symbol", ignoreDuplicates: true }
+        );
+}
+
+async function supaSaveSnapshot(pr) {
+    if (!supaReady()) return;
+    try {
+        await supabaseClient
+            .from("price_snapshots")
+            .insert({
+                user_id: STATIC_USER_ID,
+                symbol: pr.symbol,
+                price: pr.price,
+                m15_change: pr.m15_change,
+                hourly_change: pr.hourly_change,
+                daily_change: pr.daily_change,
+                spark_4h: pr.spark || null
+            });
+    } catch (e) {}
+}
+
+async function supaSaveAlert(alert) {
+    if (!supaReady()) return;
+    try {
+        await supabaseClient.rpc("push_alert", {
+            p_user_id: STATIC_USER_ID,
+            p_symbol: alert.symbol,
+            p_name: alert.name,
+            p_price: parseFloat(alert.price) || 0,
+            p_change: parseFloat(alert.change) || 0,
+            p_type: alert.type,
+            p_scope: alert.label || "24h"
+        });
+    } catch (e) {}
+}
+
+async function supaIncrementUsage() {
+    if (!supaReady()) return;
+    try {
+        await supabaseClient.rpc("increment_api_usage", {
+            p_user_id: STATIC_USER_ID
+        });
+    } catch (e) {}
+}
+
+async function supaClearAlerts() {
+    if (!supaReady()) return;
+    await supabaseClient
+        .from("alerts")
+        .delete()
+        .eq("user_id", STATIC_USER_ID);
+}
+
+async function supaRunRollup(olderThanDays = 30, keepAlertDays = 30) {
+    if (!supaReady()) return null;
+    const { data, error } = await supabaseClient.rpc("rollup_and_cleanup", {
+        p_older_than_days: olderThanDays,
+        p_keep_alert_days: keepAlertDays
+    });
+    if (error) { log(`⚠ Rollup: ${error.message}`, "warn"); return null; }
+    return data;
+}
+
+/* ============================================================
+   BOOTSTRAP — Load all state from Supabase
+   ============================================================ */
+async function supaBootstrap() {
+    if (!supaReady()) return false;
+    log("📡 Loading state from Supabase...", "sync");
+
+    const settings = await supaLoadSettings();
+    if (settings) {
+        if (settings.default_threshold) {
+            defaultThreshold = parseFloat(settings.default_threshold);
+            document.getElementById("thresholdInput").value = defaultThreshold;
+            try { localStorage.setItem(DEFAULT_THRESHOLD_KEY, String(defaultThreshold)); } catch(e){}
+        }
+        if (settings.check_interval_min) {
+            const sel = document.getElementById("intervalSelect");
+            if (sel.querySelector(`option[value="${settings.check_interval_min}"]`)) {
+                sel.value = settings.check_interval_min;
+            }
+        }
+        if (settings.theme) {
+            applyTheme(settings.theme);
+        }
+    }
+
+    const syms = await supaLoadActiveSymbols();
+    if (syms.length) {
+        activeSymbols.clear();
+        syms.forEach(s => activeSymbols.add(s));
+    } else {
+        // First time — save default BTC
+        activeSymbols.add("BTC/USD");
+        supaSaveSymbol("BTC/USD");
+    }
+
+    alertRules = await supaLoadAlertRules();
+    try { localStorage.setItem(RULES_STORAGE_KEY, JSON.stringify(alertRules)); } catch(e){}
+
+    const custSyms = await supaLoadCustomCompareSymbols();
+    customCompareSymbols = custSyms;
+
+    const snaps = await supaLoadLatestSnapshots();
+    Object.keys(priceResults).forEach(k => delete priceResults[k]);
+    snaps.forEach(s => {
+        priceResults[s.symbol] = {
+            symbol: s.symbol,
+            name: s.symbol,
+            price: parseFloat(s.price),
+            m15_change: s.m15_change !== null ? parseFloat(s.m15_change) : null,
+            hourly_change: s.hourly_change !== null ? parseFloat(s.hourly_change) : null,
+            daily_change: s.daily_change !== null ? parseFloat(s.daily_change) : null,
+            spark: Array.isArray(s.spark_4h) ? s.spark_4h : null,
+            time: new Date(s.recorded_at).toLocaleTimeString("en-US", { hour12: false })
+        };
+    });
+
+    const alerts = await supaLoadRecentAlerts(100);
+    hourlyAlerts.length = 0;
+    dailyAlerts.length = 0;
+    alerts.forEach(a => {
+        const item = {
+            symbol: a.symbol,
+            name: a.name || a.symbol,
+            price: a.price,
+            change: parseFloat(a.change_pct).toFixed(2),
+            type: a.alert_type,
+            label: a.scope,
+            time: new Date(a.alerted_at).toLocaleString("en-US", { hour12: false })
+        };
+        if (a.scope === "24h") dailyAlerts.push(item);
+        else hourlyAlerts.push(item);
+    });
+
+    const usage = await supaLoadUsage();
+    if (usage) {
+        usageCount = usage.used_count || 0;
+        usageDay = usage.usage_date;
+        try {
+            localStorage.setItem(STORAGE_KEY, String(usageCount));
+            localStorage.setItem(STORAGE_DAY_KEY, usageDay);
+        } catch (e) {}
+    }
+
+    log(`✅ Supabase loaded: ${activeSymbols.size} symbols, ${Object.keys(priceResults).length} prices, ${alerts.length} alerts`, "ok");
+    return true;
+}
+
+/* ============================================================
+   USAGE INDICATOR (sync status)
+   ============================================================ */
+function setSyncStatus(state, text) {
+    const el = document.getElementById("syncStatus");
+    if (!el) return;
+    if (state === "ok")        el.innerHTML = "🟢 " + text;
+    else if (state === "busy") el.innerHTML = "🟡 " + text;
+    else if (state === "err")  el.innerHTML = "🔴 " + text;
+    else                       el.innerHTML = "⚪ " + text;
+}
+
+/* ============================================================
+   GLOBAL STATE
+   ============================================================ */
 const TOP10 = ["BTC/USD"];
 const TOP30 = ["BTC/USD"];
 
@@ -2070,12 +1774,16 @@ const hourlyAlerts  = [];
 const dailyAlerts   = [];
 const priceResults  = {};
 
-/* ==================== Custom Alert Rules ==================== */
 const RULES_STORAGE_KEY = "cryptoMonitorRules";
 const DEFAULT_THRESHOLD_KEY = "cryptoMonitorDefaultThreshold";
 let alertRules = {};
 let defaultThreshold = 10;
 
+const THEME_KEY = "cryptoMonitorTheme";
+
+/* ============================================================
+   RULES
+   ============================================================ */
 function loadRules() {
     try {
         const saved = localStorage.getItem(RULES_STORAGE_KEY);
@@ -2092,18 +1800,15 @@ function loadRules() {
             document.getElementById("thresholdInput").value = savedDefault;
         }
     } catch (e) {}
-
     renderRules();
 }
 
 function saveRules() {
     try { localStorage.setItem(RULES_STORAGE_KEY, JSON.stringify(alertRules)); } catch (e) {}
 }
-
 function saveDefaultThreshold(val) {
     try { localStorage.setItem(DEFAULT_THRESHOLD_KEY, String(val)); } catch (e) {}
 }
-
 function getThresholdFor(symbol) {
     if (alertRules[symbol] !== undefined && alertRules[symbol] !== null) return alertRules[symbol];
     return defaultThreshold;
@@ -2113,7 +1818,10 @@ function addRule(symbolsStr, threshold) {
     const symbols = symbolsStr.split(/[,\n]/).map(s => normalizeSymbol(s)).filter(Boolean);
     if (!symbols.length) { toast("Please enter at least one symbol", "error"); return; }
     if (isNaN(threshold) || threshold <= 0) { toast("Please enter a valid threshold", "error"); return; }
-    symbols.forEach(sym => { alertRules[sym] = threshold; });
+    symbols.forEach(sym => {
+        alertRules[sym] = threshold;
+        supaSaveRule(sym, threshold);
+    });
     saveRules();
     renderRules();
     log(`🎯 Added rule: ${symbols.join(", ")} → ${threshold}%`, "info");
@@ -2123,18 +1831,18 @@ function addRule(symbolsStr, threshold) {
 function removeRule(symbol) {
     delete alertRules[symbol];
     saveRules();
+    supaRemoveRule(symbol);
     renderRules();
-    log(`🗑 Removed rule for ${symbol}`, "info");
 }
 
 function clearRules() {
     if (!Object.keys(alertRules).length) return;
     if (!confirm("Remove all custom alert rules?")) return;
+    Object.keys(alertRules).forEach(sym => supaRemoveRule(sym));
     alertRules = {};
     saveRules();
     renderRules();
     toast("All rules cleared");
-    log("🧹 All custom rules cleared", "info");
 }
 
 function renderRules() {
@@ -2150,7 +1858,6 @@ function renderRules() {
         list.innerHTML = '<div class="rules-empty">No custom rules yet. Symbols use the default threshold below.</div>';
         return;
     }
-
     list.innerHTML = entries.map(([sym, thr]) => `
         <div class="rule-item">
             <span class="rule-symbols" title="${sym}">${sym}</span>
@@ -2160,37 +1867,40 @@ function renderRules() {
     `).join("");
 }
 
-/* ==================== Theme Toggle ==================== */
-const THEME_KEY = "cryptoMonitorTheme";
+/* ============================================================
+   THEME
+   ============================================================ */
 function loadTheme() {
     let theme = "light";
     try {
         const saved = localStorage.getItem(THEME_KEY);
         if (saved === "dark") theme = "dark";
-        else if (saved === "auto") {
-            theme = window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
-        }
     } catch (e) {}
-    applyTheme(theme);
+    applyTheme(theme, false);
 }
-function applyTheme(theme) {
+
+function applyTheme(theme, save = true) {
     if (theme === "dark") {
         document.body.classList.add("dark");
         document.getElementById("themeToggle").textContent = "☀️";
-        document.getElementById("themeToggle").title = "Switch to light theme";
     } else {
         document.body.classList.remove("dark");
         document.getElementById("themeToggle").textContent = "🌙";
-        document.getElementById("themeToggle").title = "Switch to dark theme";
     }
-    try { localStorage.setItem(THEME_KEY, theme); } catch (e) {}
+    if (save) {
+        try { localStorage.setItem(THEME_KEY, theme); } catch (e) {}
+        supaUpsertSetting({ theme });
+    }
 }
+
 function toggleTheme() {
     const isDark = document.body.classList.contains("dark");
     applyTheme(isDark ? "light" : "dark");
 }
 
-/* ==================== Toast / Log ==================== */
+/* ============================================================
+   TOAST / LOG
+   ============================================================ */
 let toastTimer = null;
 function toast(msg, type = "") {
     const t = document.getElementById("toast");
@@ -2244,6 +1954,7 @@ function addSymbol(raw) {
     invalidSymbolMap.delete(sym);
     renderChips();
     log(`➕ Added symbol: ${sym}`, "info");
+    supaSaveSymbol(sym);
     return true;
 }
 
@@ -2255,6 +1966,7 @@ function removeSymbol(sym) {
     renderPrices();
     renderValidationSummary();
     log(`➖ Removed symbol: ${sym}`, "info");
+    supaRemoveSymbol(sym);
 }
 
 function renderChips() {
@@ -2285,9 +1997,11 @@ function getSettings() {
 
 function loadPreset(type) {
     if (type === "clear") {
+        const syms = [...activeSymbols];
         activeSymbols.clear();
         invalidSymbolMap.clear();
         Object.keys(priceResults).forEach(k => delete priceResults[k]);
+        syms.forEach(s => supaRemoveSymbol(s));
         renderChips();
         renderPrices();
         renderValidationSummary();
@@ -2296,11 +2010,20 @@ function loadPreset(type) {
         return;
     }
     const list = type === "top10" ? TOP10 : TOP30;
-    list.forEach(s => activeSymbols.add(s));
+    list.forEach(s => {
+        if (!activeSymbols.has(s)) {
+            activeSymbols.add(s);
+            supaSaveSymbol(s);
+        }
+    });
     renderChips();
-    log(`📋 Loaded ${type === "top10" ? "Top 10" : "Top 30"} symbols`, "info");
     toast(`Loaded ${list.length} symbols`, "success");
 }
+
+/* ============================================================
+   FETCH (rate limited)
+   ============================================================ */
+function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
 
 async function rateLimitedFetch(url) {
     const task = requestQueue.then(async () => {
@@ -2314,6 +2037,7 @@ async function rateLimitedFetch(url) {
         if (elapsed < MIN_INTERVAL_MS) await sleep(MIN_INTERVAL_MS - elapsed);
         lastRequestTime = Date.now();
         incrementUsage();
+        supaIncrementUsage();
         const res = await fetch(url);
         if (res.status === 429) {
             rateLimitCooldownUntil = Date.now() + 65000;
@@ -2321,6 +2045,7 @@ async function rateLimitedFetch(url) {
             await sleep(65000);
             lastRequestTime = Date.now();
             incrementUsage();
+            supaIncrementUsage();
             const retry = await fetch(url);
             if (retry.status === 429) throw new Error("Rate limit persists");
             return retry;
@@ -2361,14 +2086,14 @@ async function validateSymbol(symbol) {
     }
 }
 
-async function validateAllSymbols(showToast = true) {
+async function validateAllSymbols(showToastFlag = true) {
     const symbols = [...activeSymbols];
     if (!symbols.length) {
-        if (showToast) toast("No symbols to validate", "warn");
+        if (showToastFlag) toast("No symbols to validate", "warn");
         return { valid: [], invalid: [] };
     }
     log(`🔎 Validating ${symbols.length} symbols...`, "info");
-    if (showToast) toast(`Validating ${symbols.length} symbols...`);
+    if (showToastFlag) toast(`Validating ${symbols.length} symbols...`);
     invalidSymbolMap.clear();
     const valid = [];
     const invalid = [];
@@ -2390,7 +2115,7 @@ async function validateAllSymbols(showToast = true) {
     }
     renderChips();
     renderValidationSummary();
-    if (showToast) {
+    if (showToastFlag) {
         if (invalid.length === 0) toast(`All ${valid.length} symbols are valid ✓`, "success");
         else toast(`${invalid.length} invalid symbol(s) found`, "error");
     }
@@ -2401,17 +2126,19 @@ function renderValidationSummary() {
     const box = document.getElementById("validationSummary");
     const list = document.getElementById("validationList");
     if (invalidSymbolMap.size === 0) {
-        box.classList.remove("show");
+        box.style.display = "none";
         list.innerHTML = "";
         return;
     }
-    box.classList.add("show");
+    box.style.display = "block";
     list.innerHTML = [...invalidSymbolMap.entries()].map(([sym, msg]) => `
         <li><strong>${sym}</strong> — <span>${msg}</span></li>
     `).join("");
 }
 
-/* ==================== Data Fetching ==================== */
+/* ============================================================
+   DATA FETCHING
+   ============================================================ */
 async function fetchFullData(symbol) {
     try {
         const url = `${SERIES_URL}?symbol=${encodeURIComponent(symbol)}&interval=15min&outputsize=100&apikey=${API_KEY}`;
@@ -2436,7 +2163,6 @@ async function fetchFullData(symbol) {
             const p = parseFloat(v[i].close);
             if (!isNaN(p)) sparkSeries.push(p);
         }
-
         return {
             price: current,
             m15_change: pct(priceAgo(1)),
@@ -2471,12 +2197,13 @@ async function fetchLightData(symbol) {
             const p = parseFloat(v[i].close);
             if (!isNaN(p)) sparkSeries.push(p);
         }
-
         return { price: current, daily_change: daily, spark: sparkSeries };
     } catch (e) { return { error: e.message }; }
 }
 
-/* ==================== Alerts ==================== */
+/* ============================================================
+   ALERTS
+   ============================================================ */
 function pushDailyAlert(symbol, name, price, change) {
     const a = {
         symbol, name, price, change: change.toFixed(2),
@@ -2487,6 +2214,7 @@ function pushDailyAlert(symbol, name, price, change) {
     dailyAlerts.unshift(a);
     if (dailyAlerts.length > 50) dailyAlerts.pop();
     log(`📅 24h ${a.type === "pump" ? "PUMP" : "DUMP"}: ${symbol} ${a.change}%`, "err");
+    supaSaveAlert(a);
 }
 
 function pushHourlyAlert(symbol, name, price, change, label = "1h") {
@@ -2500,8 +2228,12 @@ function pushHourlyAlert(symbol, name, price, change, label = "1h") {
     hourlyAlerts.unshift(a);
     if (hourlyAlerts.length > 50) hourlyAlerts.pop();
     log(`⏱ ${label} ${a.type === "pump" ? "PUMP" : "DUMP"}: ${symbol} ${a.change}%`, "err");
+    supaSaveAlert(a);
 }
 
+/* ============================================================
+   PER-SYMBOL SCAN
+   ============================================================ */
 async function initialCheckSymbol(symbol) {
     const threshold = getThresholdFor(symbol);
     const data = await fetchFullData(symbol);
@@ -2531,8 +2263,8 @@ async function initialCheckSymbol(symbol) {
         time: new Date().toLocaleTimeString("en-US", { hour12: false })
     };
     renderPrices();
-    const ruleTag = alertRules[symbol] !== undefined ? ` (rule: ${threshold}%)` : "";
-    log(`✔ [INIT] ${symbol}: ${data.price} | 15m: ${fmtVal(data.m15_change)} | 1h: ${fmtVal(data.hourly_change)} | 24h: ${fmtVal(data.daily_change)}${ruleTag}`, "ok");
+    supaSaveSnapshot(priceResults[symbol]);
+    log(`✔ [INIT] ${symbol}: ${data.price} | 15m: ${fmtVal(data.m15_change)} | 1h: ${fmtVal(data.hourly_change)} | 24h: ${fmtVal(data.daily_change)}`, "ok");
     return data;
 }
 
@@ -2557,6 +2289,7 @@ async function lightCheckSymbol(symbol) {
         time: new Date().toLocaleTimeString("en-US", { hour12: false })
     };
     renderPrices();
+    supaSaveSnapshot(priceResults[symbol]);
     log(`✔ [24h] ${symbol}: ${data.price} | 24h: ${fmtVal(data.daily_change)}`, "ok");
     return data;
 }
@@ -2565,6 +2298,9 @@ function fmtVal(v) {
     return v === null || v === undefined ? "?" : v.toFixed(2) + "%";
 }
 
+/* ============================================================
+   SCANS
+   ============================================================ */
 async function runFullScan() {
     const symbols = [...activeSymbols];
     if (!symbols.length) { alert("Please add at least one symbol."); return; }
@@ -2573,8 +2309,7 @@ async function runFullScan() {
         await initialCheckSymbol(symbols[i]);
         renderAlerts();
     }
-    document.getElementById("lastRun").textContent =
-        new Date().toLocaleString("en-US", { hour12: false });
+    document.getElementById("lastRun").textContent = new Date().toLocaleString("en-US", { hour12: false });
     log("✅ Full scan complete", "ok");
 }
 
@@ -2586,18 +2321,20 @@ async function runLightScan() {
         await lightCheckSymbol(symbols[i]);
         renderAlerts();
     }
-    document.getElementById("lastRun").textContent =
-        new Date().toLocaleString("en-US", { hour12: false });
+    document.getElementById("lastRun").textContent = new Date().toLocaleString("en-US", { hour12: false });
     log("✅ Periodic check complete", "ok");
 }
 
-/* ==================== Monitoring control ==================== */
+/* ============================================================
+   MONITORING CONTROL
+   ============================================================ */
 async function startMonitoring() {
     const settings = getSettings();
     if (!settings.symbols.length) { alert("Please add at least one symbol."); return; }
 
     defaultThreshold = settings.threshold;
     saveDefaultThreshold(defaultThreshold);
+    supaUpsertSetting({ default_threshold: defaultThreshold, check_interval_min: settings.interval, is_running: true });
     renderRules();
 
     const startBtn = document.getElementById("startBtn");
@@ -2607,35 +2344,29 @@ async function startMonitoring() {
     const { valid, invalid } = await validateAllSymbols(true);
     if (invalid.length > 0) {
         const summary = invalid.map(x => `• ${x.symbol}\n   → ${x.message}`).join("\n\n");
-        const confirmed = confirm(
-            `⚠️ ${invalid.length} symbol(s) not found on Twelve Data:\n\n${summary}\n\n` +
-            `Do you want to remove them and continue with ${valid.length} valid symbol(s)?\n\n` +
-            `(OK = remove and continue, Cancel = abort)`
-        );
+        const confirmed = confirm(`⚠️ ${invalid.length} symbol(s) not found:\n\n${summary}\n\nRemove and continue with ${valid.length} valid symbol(s)?`);
         if (!confirmed) {
             startBtn.disabled = false;
             startBtn.textContent = originalText;
-            log("⏹ Monitoring aborted by user", "warn");
-            toast("Monitoring aborted", "warn");
             return;
         }
         invalid.forEach(x => {
             activeSymbols.delete(x.symbol);
             delete priceResults[x.symbol];
+            supaRemoveSymbol(x.symbol);
         });
         invalidSymbolMap.clear();
         renderChips();
         renderPrices();
         renderValidationSummary();
-        log(`🧹 Removed ${invalid.length} invalid symbol(s)`, "warn");
-        toast(`Removed ${invalid.length} invalid symbol(s)`, "warn");
     }
     if (valid.length === 0) {
         startBtn.disabled = false;
         startBtn.textContent = originalText;
-        alert("No valid symbols left. Please add valid ones and try again.");
+        alert("No valid symbols left.");
         return;
     }
+
     isRunning = true;
     intervalMs = settings.interval * 60 * 1000;
     startBtn.disabled = true;
@@ -2643,9 +2374,9 @@ async function startMonitoring() {
     document.getElementById("stopBtn").disabled = false;
     document.getElementById("stopBtn").classList.add("pulsing");
     document.getElementById("statusText").textContent = "🟢 Monitoring";
-    const intervalLabel = document.querySelector(`#intervalSelect option[value="${settings.interval}"]`).textContent;
-    log(`▶ Monitoring started (${valid.length} valid symbols, every ${intervalLabel})`, "info");
-    toast(`Monitoring started with ${valid.length} symbols`, "success");
+    log(`▶ Monitoring started (${valid.length} symbols)`, "info");
+    toast(`Monitoring started`, "success");
+
     const doInitial = !hasDoneInitialScan;
     const firstTask = doInitial ? runFullScan() : runLightScan();
     firstTask.then(() => {
@@ -2674,6 +2405,7 @@ function stopMonitoring() {
     document.getElementById("statusText").textContent = "🔴 Stopped";
     document.getElementById("countdown").textContent = "-";
     document.getElementById("progressFill").style.width = "0%";
+    supaUpsertSetting({ is_running: false });
     log("⏹ Monitoring stopped", "info");
     toast("Monitoring stopped");
 }
@@ -2720,15 +2452,33 @@ async function manualValidate() {
     const original = btn.textContent;
     btn.disabled = true;
     btn.textContent = "🔍 Validating...";
+    try { await validateAllSymbols(true); }
+    finally { btn.disabled = false; btn.textContent = original; }
+}
+
+async function rollupNow() {
+    const btn = document.getElementById("rollupBtn");
+    const original = btn.textContent;
+    btn.disabled = true;
+    btn.textContent = "⏳ Rolling up...";
     try {
-        await validateAllSymbols(true);
+        const data = await supaRunRollup(30, 30);
+        if (data && data[0]) {
+            const r = data[0];
+            log(`📊 Rollup complete: ${r.rolled_up_rows} weeks aggregated, ${r.deleted_snapshots} snapshots deleted, ${r.deleted_alerts} alerts deleted`, "ok");
+            toast(`Rollup: ${r.rolled_up_rows} weekly rows`, "success");
+        } else {
+            toast("Rollup failed (check console)", "error");
+        }
     } finally {
         btn.disabled = false;
         btn.textContent = original;
     }
 }
 
-/* ==================== Render Alerts ==================== */
+/* ============================================================
+   RENDER ALERTS / PRICES / SPARKLINE
+   ============================================================ */
 function renderAlertColumn(list, containerId, emptyText) {
     const c = document.getElementById(containerId);
     if (!list.length) { c.innerHTML = `<p class="empty">${emptyText}</p>`; return; }
@@ -2752,8 +2502,7 @@ function renderAlerts() {
     renderAlertColumn(dailyAlerts, "dailyAlerts", "No 24h alerts yet.");
 }
 
-/* ==================== Sparkline ==================== */
-function buildSparklineSVG(series, colorHint) {
+function buildSparklineSVG(series) {
     if (!series || series.length < 2) return '<span class="sparkline-empty">-</span>';
     const W = 100, H = 28, PAD = 2;
     const innerW = W - PAD * 2;
@@ -2761,38 +2510,27 @@ function buildSparklineSVG(series, colorHint) {
     const min = Math.min(...series);
     const max = Math.max(...series);
     const range = (max - min) || 1;
-
     const points = series.map((val, i) => {
         const x = PAD + (i / (series.length - 1)) * innerW;
         const y = PAD + (1 - (val - min) / range) * innerH;
         return [x, y];
     });
-
     const pathD = points.map((p, i) => `${i === 0 ? "M" : "L"}${p[0].toFixed(2)},${p[1].toFixed(2)}`).join(" ");
-    const areaD = pathD +
-        ` L${points[points.length - 1][0].toFixed(2)},${(H - PAD).toFixed(2)}` +
-        ` L${points[0][0].toFixed(2)},${(H - PAD).toFixed(2)} Z`;
-
+    const areaD = pathD + ` L${points[points.length - 1][0].toFixed(2)},${(H - PAD).toFixed(2)} L${points[0][0].toFixed(2)},${(H - PAD).toFixed(2)} Z`;
     const first = series[0];
     const last  = series[series.length - 1];
     let color = "#95a5a6";
     if (last > first) color = "#2ecc71";
     else if (last < first) color = "#e74c3c";
-    if (colorHint && colorHint !== "auto") color = colorHint;
-
     return `
-        <svg viewBox="0 0 ${W} ${H}" preserveAspectRatio="none" role="img" aria-label="24h price trend">
+        <svg viewBox="0 0 ${W} ${H}" preserveAspectRatio="none">
             <path d="${areaD}" fill="${color}" opacity="0.15"></path>
-            <path d="${pathD}" fill="none" stroke="${color}" stroke-width="1.5"
-                  stroke-linejoin="round" stroke-linecap="round"></path>
-            <circle cx="${points[points.length-1][0].toFixed(2)}"
-                    cy="${points[points.length-1][1].toFixed(2)}"
-                    r="2" fill="${color}"></circle>
+            <path d="${pathD}" fill="none" stroke="${color}" stroke-width="1.5" stroke-linejoin="round" stroke-linecap="round"></path>
+            <circle cx="${points[points.length-1][0].toFixed(2)}" cy="${points[points.length-1][1].toFixed(2)}" r="2" fill="${color}"></circle>
         </svg>
     `;
 }
 
-/* ==================== Render Prices ==================== */
 function fmtPct(v) {
     if (v === null || v === undefined) return { text: "-", color: "var(--text-3)" };
     const color = v > 0 ? "var(--green)" : v < 0 ? "var(--red)" : "var(--text-3)";
@@ -2816,9 +2554,9 @@ function renderPrices() {
             <tr onclick="openChartModal('${p.symbol}')" title="Click to open chart">
                 <td style="text-align:center;">
                     <div class="table-actions">
-                        <button class="chart-col-btn" data-tooltip="Chart" title="View chart" aria-label="View chart"
+                        <button class="chart-col-btn" data-tooltip="Chart" title="View chart"
                                 onclick="event.stopPropagation(); openChartModal('${p.symbol}')">📈</button>
-                        <button class="chart-col-btn compare" data-tooltip="Compare" title="Compare with another chart" aria-label="Compare"
+                        <button class="chart-col-btn compare" data-tooltip="Compare" title="Compare"
                                 onclick="event.stopPropagation(); openCompareModal('${p.symbol}')">⇄</button>
                     </div>
                 </td>
@@ -2846,30 +2584,23 @@ function clearAlerts() {
     hourlyAlerts.length = 0;
     dailyAlerts.length = 0;
     renderAlerts();
+    supaClearAlerts();
     log("🧹 Alerts cleared", "info");
     toast("Alerts cleared");
 }
-
-function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
 
 /* ============================================================
    TRADINGVIEW SYMBOL
    ============================================================ */
 function toTradingViewSymbol(symbol) {
     if (!symbol) return "BINANCE:BTCUSDT";
-    
     const [base, quote] = symbol.split("/");
     const baseUpper = (base || "BTC").toUpperCase();
     const quoteUpper = (quote || "USD").toUpperCase();
-
-    // Detect metals and commodities that are NOT on crypto exchanges
     const metals = ["XAU", "XAG", "XPT", "XPD", "GOLD", "SILVER"];
     if (metals.includes(baseUpper)) {
-        // Use OANDA for spot metals (e.g. OANDA:XAUUSD)
         return `OANDA:${baseUpper}${quoteUpper}`;
     }
-
-    // For everything else, use Binance (crypto pairs)
     const tvQuote = (quoteUpper === "USD" || quoteUpper === "USDC") ? "USDT" : quoteUpper;
     return `BINANCE:${baseUpper}${tvQuote}`;
 }
@@ -2898,29 +2629,22 @@ let currentChartSymbol = null;
 function openChartModal(symbol) {
     if (!symbol) return;
     currentChartSymbol = symbol;
-
     const overlay = document.getElementById("chartModalOverlay");
     const body    = document.getElementById("chartModalBody");
     const loading = document.getElementById("chartLoading");
-
     document.getElementById("chartModalSymbol").textContent = symbol;
     document.getElementById("chartModalName").textContent = "Spot market on Binance";
-
     const r = priceResults[symbol];
     updateChartStats(r);
-
     const oldIframe = body.querySelector("iframe");
     if (oldIframe) oldIframe.remove();
-
     if (loading) loading.style.display = "flex";
-
     const iframe = document.createElement("iframe");
     iframe.src = buildTradingViewWidgetURL(symbol);
     iframe.allowFullscreen = true;
     iframe.setAttribute("frameborder", "0");
     iframe.setAttribute("scrolling", "no");
     iframe.onload = () => { if (loading) loading.style.display = "none"; };
-
     body.appendChild(iframe);
     overlay.classList.add("show");
     document.body.style.overflow = "hidden";
@@ -2937,6 +2661,7 @@ function updateChartStats(r) {
 }
 
 function applyStat(el, value) {
+    if (!el) return;
     const valEl = el.querySelector(".value");
     el.classList.remove("pump", "dump", "neutral");
     if (value === null || value === undefined) {
@@ -2966,30 +2691,27 @@ function closeChartModal() {
 }
 
 /* ============================================================
-   COMPARE MODAL — with custom symbol input
+   COMPARE MODAL
    ============================================================ */
 let compareLeftSymbol = null;
 let compareRightSymbol = null;
-
-/* Store custom (manually added) symbols here. They persist in localStorage. */
+let customCompareSymbols = [];
 const CUSTOM_SYMBOLS_KEY = "cryptoMonitorCompareCustomSymbols";
-let customCompareSymbols = [];   // ["XRP/USD", "DOGE/USD", ...]
+const COMPARE_CHART_DELAY_MS = 2500;
 
-function loadCustomCompareSymbols() {
+function loadCustomCompareSymbolsLocal() {
     try {
         const raw = localStorage.getItem(CUSTOM_SYMBOLS_KEY);
         if (raw) {
             const parsed = JSON.parse(raw);
             if (Array.isArray(parsed)) {
-                customCompareSymbols = parsed
-                    .map(s => normalizeSymbol(s))
-                    .filter(Boolean);
+                customCompareSymbols = parsed.map(s => normalizeSymbol(s)).filter(Boolean);
             }
         }
     } catch (e) { customCompareSymbols = []; }
 }
 
-function saveCustomCompareSymbols() {
+function saveCustomCompareSymbolsLocal() {
     try { localStorage.setItem(CUSTOM_SYMBOLS_KEY, JSON.stringify(customCompareSymbols)); } catch (e) {}
 }
 
@@ -2997,279 +2719,168 @@ function addCustomCompareSymbol(sym) {
     if (!sym) return;
     if (!customCompareSymbols.includes(sym)) {
         customCompareSymbols.push(sym);
-        saveCustomCompareSymbols();
+        saveCustomCompareSymbolsLocal();
+        supaSaveCustomSymbol(sym);
     }
 }
 
-/**
- * Build <option> list for a compare-pane <select>:
- *  1. Active symbols (from the portal)
- *  2. Separator
- *  3. Custom symbols (from localStorage)
- * The `currentSymbol` is always included so the dropdown shows the right value.
- */
 function buildSymbolSelectOptions(currentSymbol) {
     const activeSorted = [...activeSymbols].sort();
-    const customOnly = customCompareSymbols
-        .filter(s => !activeSymbols.has(s))
-        .sort();
-
-    if (!activeSorted.length && !customOnly.length) {
-        return `<option value="">No symbols</option>`;
-    }
-
+    const customOnly = customCompareSymbols.filter(s => !activeSymbols.has(s)).sort();
+    if (!activeSorted.length && !customOnly.length) return `<option value="">No symbols</option>`;
     let html = "";
-
     if (activeSorted.length) {
         html += `<optgroup label="Active Symbols">`;
-        html += activeSorted.map(s =>
-            `<option value="${s}" ${s === currentSymbol ? "selected" : ""}>${s}</option>`
-        ).join("");
+        html += activeSorted.map(s => `<option value="${s}" ${s === currentSymbol ? "selected" : ""}>${s}</option>`).join("");
         html += `</optgroup>`;
     }
-
     if (customOnly.length) {
         html += `<optgroup label="Custom (loaded manually)">`;
-        html += customOnly.map(s =>
-            `<option value="${s}" ${s === currentSymbol ? "selected" : ""}>⭐ ${s}</option>`
-        ).join("");
+        html += customOnly.map(s => `<option value="${s}" ${s === currentSymbol ? "selected" : ""}>⭐ ${s}</option>`).join("");
         html += `</optgroup>`;
     }
-
-    // If current symbol isn't in either list (e.g. a brand-new custom one), append it
-    const inActive = activeSymbols.has(currentSymbol);
-    const inCustom = customOnly.includes(currentSymbol);
-    if (currentSymbol && !inActive && !inCustom) {
-        html += `<optgroup label="Current"><option value="${currentSymbol}" selected>${currentSymbol}</option></optgroup>`;
-    }
-
     return html;
 }
 
 function openCompareModal(symbol) {
     if (!symbol) return;
-
     compareLeftSymbol = symbol;
-    compareRightSymbol = null;   // ← intentionally empty
-
+    compareRightSymbol = null;
     const leftSelect  = document.getElementById("leftSymbolSelect");
     const rightSelect = document.getElementById("rightSymbolSelect");
-
     leftSelect.innerHTML = buildSymbolSelectOptions(compareLeftSymbol);
-    rightSelect.innerHTML = buildSymbolSelectOptions(null);   // no default
-
+    rightSelect.innerHTML = buildSymbolSelectOptions(null);
     leftSelect.value = compareLeftSymbol;
     rightSelect.value = "";
-
     document.getElementById("leftCustomInput").value = "";
     document.getElementById("rightCustomInput").value = "";
-
-    // Load ONLY the left pane. Right pane shows placeholder until user picks.
     loadComparePane("left", compareLeftSymbol);
     showRightPanePlaceholder();
-
     const overlay = document.getElementById("compareModalOverlay");
     overlay.classList.add("show");
     document.body.style.overflow = "hidden";
-    log(`⚖️ Compare opened: ${compareLeftSymbol} (right pane empty — pick a symbol)`, "info");
 }
 
-let compareLoadToken = 0;   // incremented every call, invalidates stale timeouts
+let compareLoadToken = 0;
 
 function loadComparePane(side, symbol) {
     if (!symbol) return;
-    
     const bodyId    = side === "left" ? "leftPaneBody"   : "rightPaneBody";
     const loadingId = side === "left" ? "leftPaneLoading": "rightPaneLoading";
     const labelId   = side === "left" ? "leftPaneSymbol" : "rightPaneSymbol";
-    
     const body = document.getElementById(bodyId);
     const loading = document.getElementById(loadingId);
     document.getElementById(labelId).textContent = symbol;
-    
-    // Clear previous content & errors
     const oldIframe = body.querySelector("iframe");
     if (oldIframe) oldIframe.remove();
     const oldError = body.querySelector(".compare-error");
     if (oldError) oldError.remove();
-    
-    // Hide placeholder (for right pane)
     if (side === "right") {
         const placeholder = document.getElementById("rightPanePlaceholder");
         if (placeholder) placeholder.classList.add("hidden");
     }
-    
-    // Show loading
     if (loading) loading.style.display = "flex";
-    
-    // Increment token so any previous timeout is invalidated
     const myToken = ++compareLoadToken;
-    
     const iframe = document.createElement("iframe");
     iframe.src = buildTradingViewWidgetURL(symbol);
     iframe.allowFullscreen = true;
     iframe.setAttribute("frameborder", "0");
     iframe.setAttribute("scrolling", "no");
-    
     let loaded = false;
     iframe.onload = () => {
         loaded = true;
-        if (compareLoadToken !== myToken) return;   // stale
+        if (compareLoadToken !== myToken) return;
         if (loading) loading.style.display = "none";
     };
-    
     body.appendChild(iframe);
-    
-    // Timeout: if not loaded in 8 seconds, show error
     setTimeout(() => {
-        if (compareLoadToken !== myToken) return;   // stale
+        if (compareLoadToken !== myToken) return;
         if (!loaded) showCompareError(side);
     }, 8000);
-    
-    // Update footer stats
     const r = priceResults[symbol];
-    const stat15 = document.getElementById(side + "Stat15m");
-    const stat1h = document.getElementById(side + "Stat1h");
-    const stat24 = document.getElementById(side + "Stat24h");
-    applyStat(stat15, r ? r.m15_change : null);
-    applyStat(stat1h, r ? r.hourly_change : null);
-    applyStat(stat24, r ? r.daily_change : null);
+    applyStat(document.getElementById(side + "Stat15m"), r ? r.m15_change : null);
+    applyStat(document.getElementById(side + "Stat1h"), r ? r.hourly_change : null);
+    applyStat(document.getElementById(side + "Stat24h"), r ? r.daily_change : null);
 }
 
-/**
- * Handle custom symbol typed into a compare pane input.
- *  - Normalize the input (e.g. "xrp" -> "XRP/USD")
- *  - Validate against Twelve Data
- *  - If valid: add to localStorage list + reload that pane
- *  - If invalid: show toast error
- */
- /**
- * Show the placeholder in the right pane and clear any iframe/error.
- */
 function showRightPanePlaceholder() {
     const body = document.getElementById("rightPaneBody");
     const placeholder = document.getElementById("rightPanePlaceholder");
     const loading = document.getElementById("rightPaneLoading");
-    
-    // Remove existing iframe or error
     const oldIframe = body.querySelector("iframe");
     if (oldIframe) oldIframe.remove();
     const oldError = body.querySelector(".compare-error");
     if (oldError) oldError.remove();
-    
     if (loading) loading.style.display = "none";
     if (placeholder) placeholder.classList.remove("hidden");
-    
     document.getElementById("rightPaneSymbol").textContent = "—";
-    // Reset right pane stats
     applyStat(document.getElementById("rightStat15m"), null);
     applyStat(document.getElementById("rightStat1h"), null);
     applyStat(document.getElementById("rightStat24h"), null);
 }
 
-/**
- * Show an error overlay with a Retry button if the chart doesn't load in time.
- */
 function showCompareError(side) {
     const bodyId = side === "left" ? "leftPaneBody" : "rightPaneBody";
     const body = document.getElementById(bodyId);
-    
-    // Remove existing error
     const oldError = body.querySelector(".compare-error");
     if (oldError) oldError.remove();
-    
-    // Remove loading
     const loading = document.getElementById(side === "left" ? "leftPaneLoading" : "rightPaneLoading");
     if (loading) loading.style.display = "none";
-    
-    // Create error overlay
     const err = document.createElement("div");
     err.className = "compare-error";
     err.innerHTML = `
         <div class="err-icon">⚠️</div>
         <div class="err-title">Chart failed to load</div>
         <div class="err-hint">The chart service may be temporarily busy. Try again in a moment.</div>
-        <button data-retry-side="${side}">↻ Retry</button>
+        <button>↻ Retry</button>
     `;
     body.appendChild(err);
-    
-    // Wire retry button
     err.querySelector("button").onclick = () => {
         const sym = side === "left" ? compareLeftSymbol : compareRightSymbol;
         if (sym) loadComparePane(side, sym);
     };
-    
-    log(`⚠ Chart load error on ${side} pane`, "warn");
 }
+
 async function loadCustomSymbolIntoPane(side) {
     const inputId = side === "left" ? "leftCustomInput" : "rightCustomInput";
     const input = document.getElementById(inputId);
     const raw = input.value.trim();
-    if (!raw) {
-        toast("Type a symbol first, e.g. XRP/USD", "warn");
-        return;
-    }
-
+    if (!raw) { toast("Type a symbol first", "warn"); return; }
     const sym = normalizeSymbol(raw);
-    if (!sym) {
-        toast("Invalid symbol", "error");
-        return;
-    }
-
-    // If it's already an active symbol, just select it in the dropdown
+    if (!sym) { toast("Invalid symbol", "error"); return; }
     if (activeSymbols.has(sym)) {
-        const selId = side === "left" ? "leftSymbolSelect" : "rightSymbolSelect";
-        const sel = document.getElementById(selId);
+        const sel = document.getElementById(side === "left" ? "leftSymbolSelect" : "rightSymbolSelect");
         sel.value = sym;
         if (side === "left") compareLeftSymbol = sym;
         else compareRightSymbol = sym;
         loadComparePane(side, sym);
         input.value = "";
-        toast(`${sym} loaded from active list`, "success");
+        toast(`${sym} loaded`, "success");
         return;
     }
-
-    // Validate it
     toast(`Validating ${sym}...`);
     const result = await validateSymbol(sym);
     if (!result.valid) {
-        let msg = `${sym}: ${result.reason}`;
-        if (result.alternatives && result.alternatives.length) {
-            msg += ` (found on: ${result.alternatives.join(", ")})`;
-        }
-        log(`❌ Compare custom: ${msg}`, "err");
-        toast(`${sym} not found on Twelve Data`, "error");
+        log(`❌ Compare custom: ${sym} — ${result.reason}`, "err");
+        toast(`${sym} not found`, "error");
         return;
     }
-
-    // Valid — add to custom list, add option to select, select it, load pane
     addCustomCompareSymbol(sym);
-
-    const selId = side === "left" ? "leftSymbolSelect" : "rightSymbolSelect";
-    const sel = document.getElementById(selId);
-
-    // Rebuild options for both selects (so the other one also sees it)
     document.getElementById("leftSymbolSelect").innerHTML  = buildSymbolSelectOptions(compareLeftSymbol);
     document.getElementById("rightSymbolSelect").innerHTML = buildSymbolSelectOptions(compareRightSymbol);
-
     if (side === "left") compareLeftSymbol = sym;
     else compareRightSymbol = sym;
-
+    const sel = document.getElementById(side === "left" ? "leftSymbolSelect" : "rightSymbolSelect");
     sel.value = sym;
     input.value = "";
-    
-    // If it's the right pane AND left pane is already loaded,
-    // wait a moment before loading to avoid two parallel TradingView requests
     if (side === "right" && compareLeftSymbol) {
         const loading = document.getElementById("rightPaneLoading");
         if (loading) loading.style.display = "flex";
-        log(`⏱ Delaying right chart by ${COMPARE_CHART_DELAY_MS / 1000}s to avoid rate limit...`, "info");
         setTimeout(() => loadComparePane("right", sym), COMPARE_CHART_DELAY_MS);
     } else {
         loadComparePane(side, sym);
     }
-
-    log(`✅ Compare custom: ${sym} loaded (available on ${result.exchange})`, "ok");
+    log(`✅ Compare custom: ${sym} loaded`, "ok");
     toast(`Loaded ${sym}`, "success");
 }
 
@@ -3284,7 +2895,6 @@ function closeCompareModal() {
             const err = body.querySelector(".compare-error");
             if (err) err.remove();
         });
-        // Reset placeholder for next open
         const placeholder = document.getElementById("rightPanePlaceholder");
         if (placeholder) placeholder.classList.remove("hidden");
     }, 300);
@@ -3294,117 +2904,68 @@ function closeCompareModal() {
     compareLeftSymbol = null;
     compareRightSymbol = null;
 }
+
 function swapComparePanes() {
-    // Can't swap if only one side has a symbol
-    if (!compareLeftSymbol || !compareRightSymbol) {
-        toast("Load both charts first to swap", "warn");
-        return;
-    }
-    
+    if (!compareLeftSymbol || !compareRightSymbol) { toast("Load both charts first", "warn"); return; }
     const tmp = compareLeftSymbol;
     compareLeftSymbol = compareRightSymbol;
     compareRightSymbol = tmp;
-
     document.getElementById("leftSymbolSelect").innerHTML  = buildSymbolSelectOptions(compareLeftSymbol);
     document.getElementById("rightSymbolSelect").innerHTML = buildSymbolSelectOptions(compareRightSymbol);
-
     document.getElementById("leftSymbolSelect").value  = compareLeftSymbol;
     document.getElementById("rightSymbolSelect").value = compareRightSymbol;
-
-    // Load left first, then right after a delay
     loadComparePane("left", compareLeftSymbol);
     setTimeout(() => loadComparePane("right", compareRightSymbol), COMPARE_CHART_DELAY_MS);
 }
 
 /* ============================================================
-   IMPORT / EXPORT
+   FILE IMPORT / CSV EXPORT
    ============================================================ */
 async function handleFileUpload(ev) {
     const file = ev.target.files[0];
-    if (!file) { toast("No file selected", "error"); return; }
-    log(`📁 Reading file: ${file.name} (${(file.size / 1024).toFixed(1)} KB)`, "info");
-    toast(`Reading ${file.name}...`);
+    if (!file) return;
+    log(`📁 Reading ${file.name}`, "info");
     if (typeof XLSX === "undefined") {
-        log("❌ SheetJS library not loaded (CDN blocked?)", "err");
-        toast("Excel library not loaded — check internet", "error");
+        log("❌ SheetJS not loaded", "err");
         ev.target.value = "";
         return;
     }
     const reader = new FileReader();
-    reader.onerror = () => {
-        log("❌ Failed to read file", "err");
-        toast("Failed to read file", "error");
-    };
     reader.onload = async (e) => {
         try {
             const data = new Uint8Array(e.target.result);
             const workbook = XLSX.read(data, { type: "array" });
-            if (!workbook.SheetNames || !workbook.SheetNames.length) {
-                log("❌ No sheets found in file", "err");
-                toast("Empty workbook", "error");
-                return;
-            }
             const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
             const rows = XLSX.utils.sheet_to_json(firstSheet, { header: 1, defval: "" });
-            log(`📊 Sheet "${workbook.SheetNames[0]}" has ${rows.length} row(s)`, "info");
             const candidates = [];
             const seen = new Set();
             rows.forEach(row => {
                 row.forEach(cell => {
-                    if (cell === null || cell === undefined) return;
-                    let raw = String(cell).trim();
+                    let raw = String(cell ?? "").trim();
                     if (!raw) return;
                     const lower = raw.toLowerCase();
                     if (["symbol","symbols","coin","coins","pair","pairs","ticker","name","asset"].includes(lower)) return;
-                    let sym = raw.toUpperCase().replace(/^["']|["']$/g, "");
-                    sym = sym.replace(/[-_]/g, "/");
-                    if (sym.includes("/")) {
-                        const parts = sym.split("/");
-                        if (parts.length === 2) {
-                            const base = parts[0].replace(/[^A-Z0-9]/g, "");
-                            let quote = parts[1].replace(/[^A-Z0-9]/g, "");
-                            if (quote.endsWith("P") && quote.length > 3) quote = quote.slice(0, -1);
-                            sym = base + "/" + quote;
-                        }
-                    } else {
+                    let sym = raw.toUpperCase().replace(/^["']|["']$/g, "").replace(/[-_]/g, "/");
+                    if (!sym.includes("/")) {
                         const match = sym.match(/^([A-Z0-9]{2,10}?)(USDT|USDC|USD|BTC|ETH|BNB|EUR|TRY|BRL)$/);
-                        if (match) sym = match[1] + "/" + match[2];
-                        else sym = sym + "/USD";
+                        sym = match ? match[1] + "/" + match[2] : sym + "/USD";
                     }
-                    if (!/^[A-Z0-9]{2,15}\/[A-Z]{2,6}$/.test(sym)) {
-                        log(`⏭ Skipped invalid candidate: "${raw}" → "${sym}"`, "warn");
-                        return;
-                    }
+                    if (!/^[A-Z0-9]{2,15}\/[A-Z]{2,6}$/.test(sym)) return;
                     if (seen.has(sym)) return;
                     seen.add(sym);
                     candidates.push(sym);
                 });
             });
-            if (!candidates.length) {
-                log(`❌ No valid symbols found in file (scanned ${rows.length} rows)`, "err");
-                toast("No valid symbols found in file", "error");
-                return;
-            }
-            log(`📥 Found ${candidates.length} candidate(s): ${candidates.slice(0, 5).join(", ")}${candidates.length > 5 ? "..." : ""}`, "info");
-            toast(`Validating ${candidates.length} symbols from file...`);
             let addedCount = 0, invalidCount = 0, skippedCount = 0;
             for (const sym of candidates) {
                 if (activeSymbols.has(sym)) { skippedCount++; continue; }
                 const result = await validateSymbol(sym);
                 if (result.valid) { if (addSymbol(sym)) addedCount++; }
-                else { invalidCount++; log(`❌ ${sym} from file — ${result.reason}`, "err"); }
+                else invalidCount++;
             }
-            log(`📥 Import complete: ${addedCount} added, ${invalidCount} invalid, ${skippedCount} already added`, "info");
-            toast(
-                addedCount > 0 ? `Imported ${addedCount} valid symbol(s)` :
-                invalidCount > 0 ? `All ${invalidCount} symbol(s) invalid` :
-                `No new symbols to add`,
-                addedCount > 0 ? "success" : "warn"
-            );
+            toast(`Imported ${addedCount} valid, ${invalidCount} invalid`, addedCount > 0 ? "success" : "warn");
         } catch (err) {
             log(`❌ Import error: ${err.message}`, "err");
-            toast("Failed to parse file: " + err.message, "error");
-            console.error(err);
         }
     };
     reader.readAsArrayBuffer(file);
@@ -3435,17 +2996,15 @@ function exportCSV() {
     a.download = `crypto-scan-${stamp}.csv`;
     a.click();
     URL.revokeObjectURL(url);
-    log(`📤 Exported ${items.length} row(s) to CSV`, "info");
     toast("CSV downloaded", "success");
 }
 
 /* ============================================================
-   API USAGE TRACKING (unchanged)
+   API USAGE (localStorage only for immediate display)
    ============================================================ */
 const DAILY_LIMIT = 800;
 const STORAGE_KEY = "cryptoMonitorUsage";
 const STORAGE_DAY_KEY = "cryptoMonitorUsageDay";
-
 let usageCount = 0;
 let usageDay = "";
 
@@ -3518,27 +3077,53 @@ function updateUsageUI() {
         elReset.textContent = `resets in ${hours}h ${mins}m`;
     }
     if (elWidget) {
-        elWidget.title = `API Usage: ${used}/${DAILY_LIMIT} used (${pct.toFixed(1)}%)`;
+        elWidget.title = `API Usage: ${used}/${DAILY_LIMIT} (${pct.toFixed(1)}%)`;
     }
 }
 
 /* ============================================================
-   INIT
+   APP INIT (after unlock)
    ============================================================ */
-window.addEventListener("DOMContentLoaded", () => {
+let appStarted = false;
+
+async function startApp() {
+    if (appStarted) return;
+    appStarted = true;
+
+    // Init Supabase
+    initSupabaseClient();
+
+    // Load from localStorage first
     loadTheme();
     loadRules();
-    loadCustomCompareSymbols();
-
+    loadCustomCompareSymbolsLocal();
     activeSymbols.add("BTC/USD");
-
     loadUsage();
+
+    // Bootstrap from Supabase
+    if (supaReady()) {
+        setSyncStatus("busy", "Loading...");
+        try {
+            const ok = await supaBootstrap();
+            setSyncStatus(ok ? "ok" : "err", ok ? "Connected" : "Load error");
+        } catch (e) {
+            log(`⚠ Supabase bootstrap failed: ${e.message}`, "warn");
+            setSyncStatus("err", "Offline");
+        }
+    } else {
+        setSyncStatus("err", "No SDK");
+    }
+
     setInterval(updateUsageUI, 60000);
 
     renderChips();
     renderAll();
 
+    // ---- Wire up event listeners ----
     document.getElementById("themeToggle").onclick = toggleTheme;
+    document.getElementById("lockToggleBtn").onclick = () => {
+        if (confirm("Lock the portal? You'll need to enter the code again.")) lockPortal();
+    };
 
     document.getElementById("thresholdInput").addEventListener("change", (e) => {
         const v = parseFloat(e.target.value);
@@ -3546,43 +3131,37 @@ window.addEventListener("DOMContentLoaded", () => {
             defaultThreshold = v;
             saveDefaultThreshold(v);
             renderRules();
+            supaUpsertSetting({ default_threshold: v });
         }
     });
 
-    // ---- Unified add symbols button ----
+    document.getElementById("intervalSelect").addEventListener("change", (e) => {
+        const v = parseInt(e.target.value);
+        if (!isNaN(v)) supaUpsertSetting({ check_interval_min: v });
+    });
+
     document.getElementById("addSymbolBtn").onclick = () => {
         const ta = document.getElementById("symbolInput");
         const raw = ta.value;
-        if (!raw.trim()) {
-            toast("Type at least one symbol", "warn");
-            return;
-        }
-        // Split by newline OR comma
+        if (!raw.trim()) { toast("Type at least one symbol", "warn"); return; }
         const tokens = raw.split(/[\n,]+/).map(s => s.trim()).filter(Boolean);
         let added = 0;
         tokens.forEach(t => { if (addSymbol(t)) added++; });
         ta.value = "";
-        if (added > 0) {
-            log(`➕ Added ${added} symbol(s)`, "info");
-            toast(`Added ${added} symbol(s)`, "success");
-        } else {
-            toast("No new symbols added (duplicates or invalid)", "warn");
-        }
+        if (added > 0) toast(`Added ${added} symbol(s)`, "success");
+        else toast("No new symbols added", "warn");
     };
     document.getElementById("symbolInput").addEventListener("keydown", (e) => {
-        // Ctrl+Enter or Cmd+Enter to add
         if (e.key === "Enter" && (e.ctrlKey || e.metaKey)) {
             e.preventDefault();
             document.getElementById("addSymbolBtn").click();
         }
     });
 
-    // Presets
     document.querySelectorAll(".presets button").forEach(btn => {
         btn.onclick = () => loadPreset(btn.dataset.preset);
     });
 
-    // Rules
     document.getElementById("addRuleBtn").onclick = () => {
         const symbolsInp = document.getElementById("ruleSymbolsInput");
         const thrInp = document.getElementById("ruleThresholdInput");
@@ -3594,20 +3173,18 @@ window.addEventListener("DOMContentLoaded", () => {
     });
     document.getElementById("clearRulesBtn").onclick = clearRules;
 
-    // Monitor control
     document.getElementById("startBtn").onclick = startMonitoring;
     document.getElementById("stopBtn").onclick = stopMonitoring;
     document.getElementById("validateBtn").onclick = manualValidate;
     document.getElementById("checkNowBtn").onclick = fullRescan;
+    document.getElementById("rollupBtn").onclick = rollupNow;
     document.getElementById("clearAlertsBtn").onclick = clearAlerts;
     document.getElementById("exportBtn").onclick = exportCSV;
     document.getElementById("clearLogBtn").onclick = clearLog;
 
-    // Import
     document.getElementById("importBtn").onclick = () => document.getElementById("fileInput").click();
     document.getElementById("fileInput").addEventListener("change", handleFileUpload);
 
-    // Chart modal close handlers
     const chartOverlay = document.getElementById("chartModalOverlay");
     chartOverlay.addEventListener("click", (e) => {
         if (e.target === chartOverlay) closeChartModal();
@@ -3618,7 +3195,6 @@ window.addEventListener("DOMContentLoaded", () => {
         window.open(buildTradingViewFullURL(currentChartSymbol), "_blank");
     };
 
-    // Compare modal close handlers
     const compareOverlay = document.getElementById("compareModalOverlay");
     compareOverlay.addEventListener("click", (e) => {
         if (e.target === compareOverlay) closeCompareModal();
@@ -3630,7 +3206,7 @@ window.addEventListener("DOMContentLoaded", () => {
         compareLeftSymbol = e.target.value;
         loadComparePane("left", compareLeftSymbol);
     });
-        document.getElementById("rightSymbolSelect").addEventListener("change", (e) => {
+    document.getElementById("rightSymbolSelect").addEventListener("change", (e) => {
         const val = e.target.value;
         if (!val) {
             compareRightSymbol = null;
@@ -3641,10 +3217,8 @@ window.addEventListener("DOMContentLoaded", () => {
         loadComparePane("right", compareRightSymbol);
     });
 
-    // ---- Compare custom symbol buttons ----
     document.getElementById("leftCustomAddBtn").onclick = () => loadCustomSymbolIntoPane("left");
     document.getElementById("rightCustomAddBtn").onclick = () => loadCustomSymbolIntoPane("right");
-
     document.getElementById("leftCustomInput").addEventListener("keydown", (e) => {
         if (e.key === "Enter") { e.preventDefault(); loadCustomSymbolIntoPane("left"); }
     });
@@ -3652,7 +3226,6 @@ window.addEventListener("DOMContentLoaded", () => {
         if (e.key === "Enter") { e.preventDefault(); loadCustomSymbolIntoPane("right"); }
     });
 
-    // Global Escape key
     document.addEventListener("keydown", (e) => {
         if (e.key === "Escape") {
             if (compareOverlay.classList.contains("show")) closeCompareModal();
@@ -3661,6 +3234,15 @@ window.addEventListener("DOMContentLoaded", () => {
     });
 
     log("Page ready. Click 'Start Monitoring' to begin.", "info");
+    log("☁️ Cloud sync enabled (Supabase)", "sync");
+}
+
+/* ============================================================
+   BOOT
+   ============================================================ */
+window.addEventListener("DOMContentLoaded", () => {
+    // Lock screen first (it decides whether to call startApp)
+    initLockScreen();
 });
 
 window.addEventListener("beforeunload", (e) => {
