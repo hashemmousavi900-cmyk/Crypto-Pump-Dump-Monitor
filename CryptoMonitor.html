@@ -1604,6 +1604,9 @@ function lockPortal() {
 /* ============================================================
    SUPABASE CLIENT
    ============================================================ */
+/* ============================================================
+   SUPABASE CLIENT
+   ============================================================ */
 let supabaseClient = null;
 
 function initSupabaseClient() {
@@ -1613,8 +1616,7 @@ function initSupabaseClient() {
             return false;
         }
         supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
-            auth: { persistSession: false },
-           // db: { schema: SUPABASE_SCHEMA }
+            auth: { persistSession: false }
         });
         console.log("Supabase client ready");
         return true;
@@ -1634,48 +1636,22 @@ function supaReady() {
 async function supaLoadSettings() {
     if (!supaReady()) return null;
     const { data, error } = await supabaseClient
-    .schema("crypto_monitor")
-    .from("app_settings")
-    .select("*")
-    .eq("user_id", STATIC_USER_ID)
-    .maybeSingle();
+        .schema("crypto_monitor")
+        .from("app_settings")
+        .select("*")
+        .eq("user_id", STATIC_USER_ID)
+        .maybeSingle();
     if (error && error.code !== "PGRST116") {
         log(`⚠ Load settings: ${error.message}`, "warn");
         return null;
     }
     return data;
 }
-async function supaLoadPortalCode() {
-    if (!supaReady()) return null;
-    try {
-        const settings = await supaLoadSettings();
-        if (settings && settings.portal_code) {
-            return String(settings.portal_code).trim();
-        }
-    } catch (e) {}
-    return null;
-}
 
-async function supaSetPortalCode(code) {
-    if (!supaReady()) return false;
-    try {
-        const settings = await supaLoadSettings();
-        if (settings && settings.id) {
-            await supabaseClient
-                .from("app_settings")
-                .update({ portal_code: code, updated_at: new Date().toISOString() })
-                .eq("id", settings.id);
-        } else {
-            await supabaseClient
-                .from("app_settings")
-                .insert({ user_id: STATIC_USER_ID, portal_code: code });
-        }
-        return true;
-    } catch (e) { return false; }
-}
 async function supaLoadActiveSymbols() {
     if (!supaReady()) return [];
     const { data, error } = await supabaseClient
+        .schema("crypto_monitor")
         .from("active_symbols")
         .select("symbol")
         .eq("user_id", STATIC_USER_ID);
@@ -1686,6 +1662,7 @@ async function supaLoadActiveSymbols() {
 async function supaLoadAlertRules() {
     if (!supaReady()) return {};
     const { data, error } = await supabaseClient
+        .schema("crypto_monitor")
         .from("alert_rules")
         .select("symbol, threshold")
         .eq("user_id", STATIC_USER_ID);
@@ -1698,6 +1675,7 @@ async function supaLoadAlertRules() {
 async function supaLoadCustomCompareSymbols() {
     if (!supaReady()) return [];
     const { data, error } = await supabaseClient
+        .schema("crypto_monitor")
         .from("custom_compare_symbols")
         .select("symbol")
         .eq("user_id", STATIC_USER_ID);
@@ -1708,6 +1686,7 @@ async function supaLoadCustomCompareSymbols() {
 async function supaLoadLatestSnapshots() {
     if (!supaReady()) return [];
     const { data, error } = await supabaseClient
+        .schema("crypto_monitor")
         .from("latest_prices")
         .select("*")
         .eq("user_id", STATIC_USER_ID);
@@ -1718,6 +1697,7 @@ async function supaLoadLatestSnapshots() {
 async function supaLoadRecentAlerts(limit = 100) {
     if (!supaReady()) return [];
     const { data, error } = await supabaseClient
+        .schema("crypto_monitor")
         .from("alerts")
         .select("*")
         .eq("user_id", STATIC_USER_ID)
@@ -1730,12 +1710,24 @@ async function supaLoadRecentAlerts(limit = 100) {
 async function supaLoadUsage() {
     if (!supaReady()) return null;
     const { data, error } = await supabaseClient
+        .schema("crypto_monitor")
         .from("today_usage")
         .select("*")
         .eq("user_id", STATIC_USER_ID)
         .maybeSingle();
     if (error) return null;
     return data;
+}
+
+async function supaLoadPortalCode() {
+    if (!supaReady()) return null;
+    try {
+        const settings = await supaLoadSettings();
+        if (settings && settings.portal_code) {
+            return String(settings.portal_code).trim();
+        }
+    } catch (e) {}
+    return null;
 }
 
 /* ============================================================
@@ -1747,12 +1739,14 @@ async function supaUpsertSetting(fields) {
         const existing = await supaLoadSettings();
         if (existing && existing.id) {
             const { error } = await supabaseClient
+                .schema("crypto_monitor")
                 .from("app_settings")
                 .update({ ...fields, updated_at: new Date().toISOString() })
                 .eq("id", existing.id);
             if (error) { log(`⚠ Save settings: ${error.message}`, "warn"); return false; }
         } else {
             const { error } = await supabaseClient
+                .schema("crypto_monitor")
                 .from("app_settings")
                 .insert({ ...fields, user_id: STATIC_USER_ID });
             if (error) { log(`⚠ Insert settings: ${error.message}`, "warn"); return false; }
@@ -1761,9 +1755,30 @@ async function supaUpsertSetting(fields) {
     } catch (e) { return false; }
 }
 
+async function supaSetPortalCode(code) {
+    if (!supaReady()) return false;
+    try {
+        const settings = await supaLoadSettings();
+        if (settings && settings.id) {
+            await supabaseClient
+                .schema("crypto_monitor")
+                .from("app_settings")
+                .update({ portal_code: code, updated_at: new Date().toISOString() })
+                .eq("id", settings.id);
+        } else {
+            await supabaseClient
+                .schema("crypto_monitor")
+                .from("app_settings")
+                .insert({ user_id: STATIC_USER_ID, portal_code: code });
+        }
+        return true;
+    } catch (e) { return false; }
+}
+
 async function supaSaveSymbol(symbol) {
     if (!supaReady()) return;
     const { error } = await supabaseClient
+        .schema("crypto_monitor")
         .from("active_symbols")
         .upsert(
             { user_id: STATIC_USER_ID, symbol },
@@ -1777,6 +1792,7 @@ async function supaSaveSymbol(symbol) {
 async function supaRemoveSymbol(symbol) {
     if (!supaReady()) return;
     await supabaseClient
+        .schema("crypto_monitor")
         .from("active_symbols")
         .delete()
         .eq("user_id", STATIC_USER_ID)
@@ -1786,6 +1802,7 @@ async function supaRemoveSymbol(symbol) {
 async function supaSaveRule(symbol, threshold) {
     if (!supaReady()) return;
     await supabaseClient
+        .schema("crypto_monitor")
         .from("alert_rules")
         .upsert(
             { user_id: STATIC_USER_ID, symbol, threshold },
@@ -1796,6 +1813,7 @@ async function supaSaveRule(symbol, threshold) {
 async function supaRemoveRule(symbol) {
     if (!supaReady()) return;
     await supabaseClient
+        .schema("crypto_monitor")
         .from("alert_rules")
         .delete()
         .eq("user_id", STATIC_USER_ID)
@@ -1805,6 +1823,7 @@ async function supaRemoveRule(symbol) {
 async function supaSaveCustomSymbol(symbol) {
     if (!supaReady()) return;
     await supabaseClient
+        .schema("crypto_monitor")
         .from("custom_compare_symbols")
         .upsert(
             { user_id: STATIC_USER_ID, symbol },
@@ -1816,6 +1835,7 @@ async function supaSaveSnapshot(pr) {
     if (!supaReady()) return;
     try {
         await supabaseClient
+            .schema("crypto_monitor")
             .from("price_snapshots")
             .insert({
                 user_id: STATIC_USER_ID,
@@ -1832,15 +1852,17 @@ async function supaSaveSnapshot(pr) {
 async function supaSaveAlert(alert) {
     if (!supaReady()) return;
     try {
-        await supabaseClient.rpc("push_alert", {
-            p_user_id: STATIC_USER_ID,
-            p_symbol: alert.symbol,
-            p_name: alert.name,
-            p_price: parseFloat(alert.price) || 0,
-            p_change: parseFloat(alert.change) || 0,
-            p_type: alert.type,
-            p_scope: alert.label || "24h"
-        });
+        await supabaseClient
+            .schema("crypto_monitor")
+            .rpc("push_alert", {
+                p_user_id: STATIC_USER_ID,
+                p_symbol: alert.symbol,
+                p_name: alert.name,
+                p_price: parseFloat(alert.price) || 0,
+                p_change: parseFloat(alert.change) || 0,
+                p_type: alert.type,
+                p_scope: alert.label || "24h"
+            });
     } catch (e) {}
 }
 
@@ -1848,16 +1870,17 @@ async function supaIncrementUsage() {
     if (!supaReady()) return;
     try {
         await supabaseClient
-    .schema("crypto_monitor")
-    .rpc("increment_api_usage", {
-        p_user_id: STATIC_USER_ID
-    });
+            .schema("crypto_monitor")
+            .rpc("increment_api_usage", {
+                p_user_id: STATIC_USER_ID
+            });
     } catch (e) {}
 }
 
 async function supaClearAlerts() {
     if (!supaReady()) return;
     await supabaseClient
+        .schema("crypto_monitor")
         .from("alerts")
         .delete()
         .eq("user_id", STATIC_USER_ID);
@@ -1865,10 +1888,12 @@ async function supaClearAlerts() {
 
 async function supaRunRollup(olderThanDays = 30, keepAlertDays = 30) {
     if (!supaReady()) return null;
-    const { data, error } = await supabaseClient.rpc("rollup_and_cleanup", {
-        p_older_than_days: olderThanDays,
-        p_keep_alert_days: keepAlertDays
-    });
+    const { data, error } = await supabaseClient
+        .schema("crypto_monitor")
+        .rpc("rollup_and_cleanup", {
+            p_older_than_days: olderThanDays,
+            p_keep_alert_days: keepAlertDays
+        });
     if (error) { log(`⚠ Rollup: ${error.message}`, "warn"); return null; }
     return data;
 }
