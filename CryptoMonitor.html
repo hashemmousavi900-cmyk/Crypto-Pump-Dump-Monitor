@@ -1161,24 +1161,15 @@
 
 <!-- ==================== LOCK SCREEN ==================== -->
 <div class="lock-screen" id="lockScreen">
-    <div class="lock-box">
-        <div class="lock-icon">🔒</div>
-        <div class="lock-title">Crypto Monitor</div>
-        <div class="lock-subtitle">Enter your 4-digit access code</div>
-        <input
-            type="password"
-            class="lock-input"
-            id="lockInput"
-            maxlength="4"
-            inputmode="numeric"
-            pattern="[0-9]*"
-            autocomplete="off"
-            placeholder="••••"
-        >
-        <button class="lock-btn" id="lockBtn">Unlock</button>
-        <div class="lock-error" id="lockError"></div>
-        <div class="lock-hint">Default code: <b>☺☻♥♦</b> — Designed By HAMO</div>
-    </div>
+<form class="lock-box" id="lockForm" autocomplete="off" onsubmit="return false;">
+    <div class="lock-icon">🔒</div>
+    <div class="lock-title">Crypto Monitor</div>
+    <div class="lock-subtitle">Enter your access code</div>
+    <input type="password" class="lock-input" id="lockInput" maxlength="6" inputmode="numeric" pattern="[0-9]*" autocomplete="off" placeholder="••••">
+    <button type="submit" class="lock-btn" id="lockBtn">Unlock</button>
+    <div class="lock-error" id="lockError"></div>
+    <div class="lock-hint">Default code: <b>☺☻♥♫</b></div>
+</form>
 </div>
 
 <!-- ==================== MAIN APP ==================== -->
@@ -1590,7 +1581,10 @@ async function initLockScreen() {
         }
     }
 
-    lockBtn.onclick = tryUnlock;
+    document.getElementById("lockForm").addEventListener("submit", (e) => {
+    e.preventDefault();
+    tryUnlock();
+});
     lockInput.addEventListener("keydown", (e) => {
         if (e.key === "Enter") tryUnlock();
     });
@@ -1620,7 +1614,7 @@ function initSupabaseClient() {
         }
         supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
             auth: { persistSession: false },
-            db: { schema: SUPABASE_SCHEMA }
+           // db: { schema: SUPABASE_SCHEMA }
         });
         console.log("Supabase client ready");
         return true;
@@ -1640,10 +1634,11 @@ function supaReady() {
 async function supaLoadSettings() {
     if (!supaReady()) return null;
     const { data, error } = await supabaseClient
-        .from("app_settings")
-        .select("*")
-        .eq("user_id", STATIC_USER_ID)
-        .maybeSingle();
+    .schema("crypto_monitor")
+    .from("app_settings")
+    .select("*")
+    .eq("user_id", STATIC_USER_ID)
+    .maybeSingle();
     if (error && error.code !== "PGRST116") {
         log(`⚠ Load settings: ${error.message}`, "warn");
         return null;
@@ -1852,9 +1847,11 @@ async function supaSaveAlert(alert) {
 async function supaIncrementUsage() {
     if (!supaReady()) return;
     try {
-        await supabaseClient.rpc("increment_api_usage", {
-            p_user_id: STATIC_USER_ID
-        });
+        await supabaseClient
+    .schema("crypto_monitor")
+    .rpc("increment_api_usage", {
+        p_user_id: STATIC_USER_ID
+    });
     } catch (e) {}
 }
 
