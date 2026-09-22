@@ -2282,16 +2282,14 @@ async function rateLimitedFetch(url) {
         const elapsed = Date.now() - lastRequestTime;
         if (elapsed < MIN_INTERVAL_MS) await sleep(MIN_INTERVAL_MS - elapsed);
         lastRequestTime = Date.now();
-        incrementUsage();
-        supaIncrementUsage();
+        await incrementUsageWithDB();
         const res = await fetch(url);
         if (res.status === 429) {
             rateLimitCooldownUntil = Date.now() + 65000;
             log(`⚠ Rate limit hit. Cooling down 65s...`, "err");
             await sleep(65000);
             lastRequestTime = Date.now();
-            incrementUsage();
-            supaIncrementUsage();
+            await incrementUsageWithDB();
             const retry = await fetch(url);
             if (retry.status === 429) throw new Error("Rate limit persists");
             return retry;
@@ -2301,7 +2299,6 @@ async function rateLimitedFetch(url) {
     requestQueue = task.catch(() => {});
     return task;
 }
-
 async function validateSymbol(symbol) {
     try {
         const base = symbol.split("/")[0];
@@ -3277,15 +3274,40 @@ function loadUsage() {
     updateUsageUI();
 }
 
-function incrementUsage() {
+async function incrementUsageWithDB() {
     const today = todayKey();
     if (usageDay !== today) {
         usageDay = today;
         usageCount = 0;
-        localStorage.setItem(STORAGE_DAY_KEY, today);
+        try {
+            localStorage.setItem(STORAGE_DAY_KEY, today);
+        } catch (e) {}
     }
-    usageCount++;
-    try { localStorage.setItem(STORAGE_KEY, String(usageCount)); } catch (e) {}
+
+    // If Supabase is ready, save to DB and read back
+    if (supaReady()) {
+        try {
+            await supaIncrementUsage();
+            const usage = await supaLoadUsage();
+            if (usage) {
+                usageCount = usage.used_count || 0;
+                usageDay = usage.usage_date;
+                try {
+                    localStorage.setItem(STORAGE_KEY, String(usageCount));
+                    localStorage.setItem(STORAGE_DAY_KEY, usageDay);
+                } catch (e) {}
+            }
+        } catch (e) {
+            // Fallback: just increment locally
+            usageCount++;
+            try { localStorage.setItem(STORAGE_KEY, String(usageCount)); } catch (e) {}
+        }
+    } else {
+        // No Supabase — local only
+        usageCount++;
+        try { localStorage.setItem(STORAGE_KEY, String(usageCount)); } catch (e) {}
+    }
+
     updateUsageUI();
 }
 
@@ -3349,6 +3371,18 @@ async function startApp() {
         try {
             const ok = await supaBootstrap();
             setSyncStatus(ok ? "ok" : "err", ok ? "Connected" : "Load error");
+
+            // Re-read usage from DB to stay in sync
+            const freshUsage = await supaLoadUsage();
+            if (freshUsage) {
+                usageCount = freshUsage.used_count || 0;
+                usageDay = freshUsage.usage_date;
+                try {
+                    localStorage.setItem(STORAGE_KEY, String(usageCount));
+                    localStorage.setItem(STORAGE_DAY_KEY, usageDay);
+                } catch (e) {}
+                updateUsageUI();
+            }
         } catch (e) {
             log(`⚠ Supabase bootstrap failed: ${e.message}`, "warn");
             setSyncStatus("err", "Offline");
