@@ -2061,14 +2061,35 @@ function addRule(symbolsStr, threshold) {
     const symbols = symbolsStr.split(/[,\n]/).map(s => normalizeSymbol(s)).filter(Boolean);
     if (!symbols.length) { toast("Please enter at least one symbol", "error"); return; }
     if (isNaN(threshold) || threshold <= 0) { toast("Please enter a valid threshold", "error"); return; }
+
+    let addedToActive = 0;
+
     symbols.forEach(sym => {
+        // 1) ذخیره قانون
         alertRules[sym] = threshold;
         supaSaveRule(sym, threshold);
+
+        // 2) اگه توی ارزهای فعال نیست، خودکار اضافه کن
+        if (!activeSymbols.has(sym)) {
+            activeSymbols.add(sym);
+            invalidSymbolMap.delete(sym);
+            supaSaveSymbol(sym);
+            addedToActive++;
+        }
     });
+
     saveRules();
     renderRules();
+    renderChips();   // ← لیست ارزهای فعال رو دوباره رسم کن
+
     log(`🎯 Added rule: ${symbols.join(", ")} → ${threshold}%`, "info");
-    toast(`Rule added for ${symbols.length} symbol(s)`, "success");
+
+    if (addedToActive > 0) {
+        log(`➕ Also added ${addedToActive} symbol(s) to Active list`, "ok");
+        toast(`Rule added · ${addedToActive} symbol(s) also activated`, "success");
+    } else {
+        toast(`Rule added for ${symbols.length} symbol(s)`, "success");
+    }
 }
 
 function removeRule(symbol) {
